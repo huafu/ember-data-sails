@@ -1,6 +1,7 @@
-# Ember-data-sails
+ember-data-sails
+================
 
-This README outlines the details of collaborating on this Ember addon.
+Adapters and tools for Ember to work well with Sails.
 
 ## Installation
 
