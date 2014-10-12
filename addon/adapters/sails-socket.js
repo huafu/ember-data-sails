@@ -22,15 +22,18 @@ export default SailsBaseAdapter.extend({
   _socketListeners: null,
 
   /**
+   * @since 0.0.1
    * @inheritDoc
    */
   init: function () {
     this._super();
     this._socketListeners = {};
+    this.fetchCsrfToken();
     this.socketAddListener('connect', this._handleSocketConnect);
   },
 
   /**
+   * @since 0.0.1
    * @inheritDoc
    */
   destroy: function () {
@@ -289,6 +292,20 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
+   * Fetches the CSRF token
+   *
+   * @since 0.0.3
+   * @method fetchCsrfToken
+   */
+  fetchCsrfToken: function () {
+    // on connection we need to re-new the CSRF
+    io.socket.get('/csrfToken', function (tokenObject) {
+      this._log('debug', 'got new CSRF token', tokenObject);
+      this.csrfToken = tokenObject._csrf;
+    }.bind(this));
+  },
+
+  /**
    * Handle `connect` event of the socket
    *
    * @since 0.0.1
@@ -299,11 +316,7 @@ export default SailsBaseAdapter.extend({
     this.csrfToken = null;
     this.socketRebindListeners();
     if (this.useCSRF) {
-      // on connection we need to re-new the CSRF
-      io.socket.get('/csrfToken', function (tokenObject) {
-        this._log('debug', 'got new CSRF token', tokenObject);
-        this.csrfToken = tokenObject._csrf;
-      }.bind(this));
+      this.fetchCsrfToken();
     }
   },
 
