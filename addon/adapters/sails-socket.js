@@ -1,4 +1,3 @@
-/*global io*/
 import DS from 'ember-data';
 import Ember from 'ember';
 import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
@@ -13,114 +12,13 @@ import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
  */
 export default SailsBaseAdapter.extend({
   /**
-   * Holds the descriptors for each event listened on the socket
    * @since 0.0.1
-   * @property _socketListeners
-   * @type Object<Object>
-   * @private
-   */
-  _socketListeners: null,
-
-  /**
-   * @since 0.0.1
+   * @method init
    * @inheritDoc
    */
   init: function () {
     this._super();
-    this._socketListeners = {};
-    this.fetchCsrfToken();
-    this.socketAddListener('connect', this._handleSocketConnect);
-  },
-
-  /**
-   * @since 0.0.1
-   * @inheritDoc
-   */
-  destroy: function () {
-    Ember.keys(this._socketListeners).map(this.socketRemoveListener, this);
-    this._super();
-  },
-
-  /**
-   * Adds an event listener to the socket with some meta
-   *
-   * @since 0.0.1
-   * @method socketAddListener
-   * @param {String} event The event to listen to
-   * @param {Function|String} callback The method to be called (will be bound on the adapter)
-   * @param {mixed} [metadata] SOme metadata to store and get passed over the callback
-   * @param (Boolean} [autoReAttach] Whether to re-attach the listener after a reconnection
-   * @chainable
-   */
-  socketAddListener: function (event, callback, metadata, autoReAttach) {
-    var def = this._socketListeners[event];
-    if (def) {
-      this._log('info', 'already listening for ' + event, def);
-      return;
-    }
-    callback = typeof callback === 'string' ? this[callback] : callback;
-    def = this._socketListeners[event] = {data: metadata, event: event, autoReAttach: !!autoReAttach};
-    def.callback = callback.bind(this, def);
-    io.socket.addListener(event, def.callback);
-    this._log('debug', 'listening for ' + event, def);
-    return this;
-  },
-
-  /**
-   * Remove an event listener and stop listening for that even on the socket
-   *
-   * @since 0.0.1
-   * @method socketRemoveListener
-   * @param {String} event The event to stop listening for
-   * @chainable
-   */
-  socketRemoveListener: function (event) {
-    var def = this._socketListeners[event];
-    if (!def) {
-      this._log('info', 'not listening for ' + event + ' yet');
-      return;
-    }
-    delete this._socketListeners[event];
-    io.socket.removeListener(event, def.callback);
-    this._log('debug', 'stop listening for ' + event, def);
-    return this;
-  },
-
-  /**
-   * Re-attach all listeners on the socket
-   *
-   * @since 0.0.1
-   * @method socketRebindListeners
-   * @chainable
-   */
-  socketRebindListeners: function () {
-    var meta;
-    for (var event in this._socketListeners) {
-      meta = this._socketListeners[event];
-      if (meta.autoReAttach) {
-        try {
-          io.socket.removeListener(event, meta.callback);
-        }
-        catch (e) {
-          // noop
-        }
-        io.socket.addListener(event, meta.callback);
-        this._log('info', 're-attached listener for ' + event, meta);
-      }
-    }
-    return this;
-  },
-
-  /**
-   * Finds whether the socket is listening for an event or not
-   *
-   * @since 0.0.1
-   * @method socketIsListening
-   * @param {String} event The event to test
-   * @returns {Boolean} Returns `true` if we're listening for that event, else `false`
-   */
-  socketIsListening: function (event) {
-    return !!this._socketListeners[event];
+    this.get('sailsSocket').on('didConnect', this, 'fetchCsrfToken');
   },
 
   /**
@@ -140,30 +38,25 @@ export default SailsBaseAdapter.extend({
    * @param {String} url The HTTP URL to fake
    * @param {String} method The HTTP method to fake
    * @param {Object} data The data to send
-   * @returns {Ember.RSVP.Promise} A promise resolving to the result or an error
+   * @return {Ember.RSVP.Promise} A promise resolving to the result or an error
    */
   socket: function (url, method, data) {
     method = method.toLowerCase();
-    var self = this, req = data;
+    var self = this;
     if (method !== 'get') {
       this.checkCSRF(data);
     }
-    return new Ember.RSVP.Promise(function (resolve, reject) {
-      io.socket[method](url, data, function (data) {
-        var res = data, cb = reject, level = 'warning';
-        if (self.isErrorObject(data)) {
-          if (data.errors) {
-            level = 'error';
-            res = new DS.InvalidError(self.formatError(data));
-          }
+    return this.get('sailsSocket').call(method, url, data).then(function (response) {
+      Ember.debug('socket %@ request on %@'.fmt(method, url));
+      Ember.debug('  -> request: %@'.fmt(Ember.inspect(data)));
+      Ember.debug('  <- response: %@'.fmt(Ember.inspect(response)));
+      if (self.isErrorObject(response)) {
+        if (response.errors) {
+          return Ember.RSVP.reject(new DS.InvalidError(self.formatError(response)));
         }
-        else {
-          cb = resolve;
-          level = 'info';
-        }
-        self._log(level, 'socket request: ' + method + ' ' + url, {request: req, response: data});
-        cb(res);
-      });
+        return Ember.RSVP.reject(response);
+      }
+      return response;
     });
   },
 
@@ -294,49 +187,17 @@ export default SailsBaseAdapter.extend({
   /**
    * Fetches the CSRF token
    *
-   * @since 0.0.3
-   * @method fetchCsrfToken
+   * @since 0.0.4
+   * @method _fetchCsrfToken
+   * @return {Ember.RSVP.Promise} Returns the promise resolving the CSRF token
+   * @private
    */
-  fetchCsrfToken: function () {
-    // on connection we need to re-new the CSRF
-    io.socket.get('/csrfToken', function (tokenObject) {
-      this._log('debug', 'got new CSRF token', tokenObject);
+  _fetchCsrfToken: function () {
+    return this.get('sailsSocket').call('get', '/csrfToken').then(function (tokenObject) {
+      Ember.debug('got a new CSRF token: %@', Ember.inspect(tokenObject));
       this.csrfToken = tokenObject._csrf;
-    }.bind(this));
-  },
-
-  /**
-   * Handle `connect` event of the socket
-   *
-   * @since 0.0.1
-   * @method _handleSocketConnect
-   * @private
-   */
-  _handleSocketConnect: function () {
-    this.csrfToken = null;
-    this.socketRebindListeners();
-    if (this.useCSRF) {
-      this.fetchCsrfToken();
-    }
-  },
-
-  /**
-   * Handle reception of messages over the socket
-   * @since 0.0.1
-   * @method _handleSocketMessage
-   * @param {Object} meta The meta containing `data`, `event`, `autoReAttach` and `callback`
-   * @param {Object} message The message received
-   * @private
-   */
-  _handleSocketMessage: function (meta, message) {
-    var method = '_handleSocketRecord' + message.verb.capitalize();
-    this._log('debug', 'new event ' + meta.event + ':' + message.verb + ', message:', message);
-    if (this[method]) {
-      Ember.run.next(this, method, meta, message);
-    }
-    else {
-      this._log('notice', 'nothing to handle message with verb ' + message.verb);
-    }
+      return tokenObject._csrf;
+    });
   },
 
   /**
@@ -344,18 +205,17 @@ export default SailsBaseAdapter.extend({
    *
    * @since 0.0.1
    * @method _handleSocketRecordCreated
-   * @param {Object} meta The meta containing `data`, `event`, `autoReAttach` and `callback`
+   * @param {DS.Store} store The store to be used
+   * @param {subclass of DS.Model} type The type to push
    * @param {Object} message The message received
    * @private
    */
-  _handleSocketRecordCreated: function (meta, message) {
-    var type = meta.data.type,
-      store = meta.data.store,
-      record = message.data;
+  _handleSocketRecordCreated: function (store, type, message) {
+    var record = message.data;
     if (!record.id && message.id) {
       record.id = message.id;
     }
-    store.pushPayload(store, this._newPayload(store, type, record));
+    store.pushPayload(type, this._newPayload(store, type, record));
   },
 
   /**
@@ -363,7 +223,8 @@ export default SailsBaseAdapter.extend({
    *
    * @since 0.0.1
    * @method _handleSocketRecordUpdated
-   * @param {Object} meta The meta containing `data`, `event`, `autoReAttach` and `callback`
+   * @param {DS.Store} store The store to be used
+   * @param {subclass of DS.Model} type The type to push
    * @param {Object} message The message received
    * @private
    */
@@ -373,15 +234,14 @@ export default SailsBaseAdapter.extend({
    * Handle a destroyed record message
    *
    * @since 0.0.1
-   * @method _handleSocketRecordDestroyed
-   * @param {Object} meta The meta containing `data`, `event`, `autoReAttach` and `callback`
+   * @method _handleSocketRecordDeleted
+   * @param {DS.Store} store The store to be used
+   * @param {subclass of DS.Model} type The type to push
    * @param {Object} message The message received
    * @private
    */
-  _handleSocketRecordDestroyed: function (meta, message) {
-    var type = meta.data.type,
-      store = meta.data.store,
-      record = store.getById(type.typeKey, message.id);
+  _handleSocketRecordDeleted: function (store, type, message) {
+    var record = store.getById(type.typeKey, message.id);
     if (record && typeof record.get('dirtyType') === 'undefined') {
       record.unloadRecord();
     }
@@ -396,12 +256,16 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _listenToSocket: function (model) {
+    var store, type;
     var eventName = Ember.String.camelize(model).toLowerCase();
-    if (this.socketIsListening(eventName)) {
-      return;
+    var socket = this.get('sailsSocket');
+    if (socket.listenFor(eventName, true)) {
+      Ember.debug('setting up adapter to listen for `%@` messages'.fmt(model));
+      store = this.container.lookup('store:main');
+      type = store.modelFor(model);
+      socket.on(eventName + '.created', this, '_handleSocketRecordCreated', store, type);
+      socket.on(eventName + '.updated', this, '_handleSocketRecordUpdated', store, type);
+      socket.on(eventName + '.destroyed', this, '_handleSocketRecordDeleted', store, type);
     }
-    var store = this.container.lookup('store:main');
-    var type = store.modelFor(model);
-    this.socketAddListener(eventName, this._handleSocketMessage, {store: store, type: type}, true);
   }
 });

@@ -2,15 +2,8 @@ import DS from 'ember-data';
 import Ember from 'ember';
 
 
-var LOG_LEVELS = ['debug', 'info', 'notice', 'warning', 'error', 'fatal'];
-var LOG_LEVEL_CONSOLE = {
-  fatal:   'error',
-  warning: 'warn'
-};
-
 /**
- * Base adapter for SailsJS
- * (tested with Sails version `10.0.5`)
+ * Base adapter for SailsJS adapters
  *
  * @since 0.0.1
  * @class SailsBaseAdapter
@@ -24,15 +17,7 @@ export default DS.RESTAdapter.extend({
    * @property useCSRF
    * @type Boolean
    */
-  useCSRF:  true,
-  /**
-   * Min log level to log in the console
-   * @since 0.0.1
-   * @property logLevel
-   * @type String
-   */
-  logLevel: 'warning',
-
+  useCSRF:   true,
   /**
    * The csrfToken
    * @since 0.0.1
@@ -40,6 +25,16 @@ export default DS.RESTAdapter.extend({
    * @type String
    */
   csrfToken: null,
+
+  /**
+   * @since 0.0.4
+   * @method init
+   * @inheritDoc
+   */
+  init: function () {
+    this._super();
+    this.fetchCsrfToken();
+  },
 
   /**
    * @since 0.0.1
@@ -51,11 +46,24 @@ export default DS.RESTAdapter.extend({
     var data = Ember.$.parseJSON(jqXHR.responseText);
 
     if (data.errors) {
-      this._log('error', 'error returned from Sails', data);
+      Ember.warn('error returned from Sails' + Ember.inspect(data));
       return new DS.InvalidError(this.formatError(data));
     }
     else {
       return error;
+    }
+  },
+
+  /**
+   * Fetches the CSRF token if needed
+   *
+   * @since 0.0.3
+   * @method fetchCsrfToken
+   */
+  fetchCsrfToken: function () {
+    this.csrfToken = null;
+    if (this.useCSRF) {
+      this._fetchCsrfToken();
     }
   },
 
@@ -65,7 +73,7 @@ export default DS.RESTAdapter.extend({
    * @since 0.0.1
    * @method formatError
    * @param {Object} error The error to format
-   * @returns {Object}
+   * @return {Object}
    */
   formatError: function (error) {
     return Object.keys(error.invalidAttributes).reduce(function (memo, property) {
@@ -91,7 +99,7 @@ export default DS.RESTAdapter.extend({
    * @since 0.0.1
    * @method isErrorObject
    * @param {Object} data The object to test
-   * @returns {Boolean} Returns `true` if it's an error object, else `false`
+   * @return {Boolean} Returns `true` if it's an error object, else `false`
    */
   isErrorObject: function (data) {
     return !!(data.error && data.model && data.summary && data.status);
@@ -103,15 +111,15 @@ export default DS.RESTAdapter.extend({
    * @since 0.0.1
    * @method checkCSRF
    * @param {Object} [data] The data on which to attach the CSRF token
-   * @returns {Object} data The given data
+   * @return {Object} data The given data
    */
   checkCSRF: function (data) {
     if (!this.useCSRF) {
       return data;
     }
-    this._log('info', 'adding CSRF token');
+    Ember.debug('adding CSRF token');
     if (!this.csrfToken || this.csrfToken.length === 0) {
-      this._log('error', 'CSRF not fetched yet');
+      Ember.warn('CSRF not fetched yet');
       throw new DS.Error("CSRF Token not fetched yet.");
     }
     data._csrf = this.csrfToken;
@@ -131,7 +139,7 @@ export default DS.RESTAdapter.extend({
    */
   _newPayload: function (store, type, record) {
     var res = {}, extracted;
-    this._log('debug', 'created new payload');
+    Ember.debug('created new payload');
     if (arguments.length > 0) {
       extracted = [];
       this._payloadInject(store, res, type, record, extracted);
@@ -168,13 +176,13 @@ export default DS.RESTAdapter.extend({
       records.forEach(function (record) {
         var id = '' + record.id;
         if (!record.id) {
-          self._log('fatal', 'got a record without id', record);
+          Ember.warn('got a record without id: %@'.fmt(Ember.inspect(record)));
           throw new ReferenceError('Got a record without id for ' + typeKey);
         }
         if (!(id in index)) {
           index[id] = 0;
           payload[typeKey].push(record);
-          self._log('debug', 'injected one ' + typeKey + ' record', record);
+          Ember.debug('injected one %@ record: %@'.fmt(typeKey, Ember.inspect(record)));
           toExtract.push(record);
         }
       });
@@ -193,7 +201,7 @@ export default DS.RESTAdapter.extend({
    * @param {DS.Store} store The store to be used
    * @param {Object} payload The payload in which to inject the found record(s)
    * @param {subclass of DS.Model} type The model of the record to inspect
-   * @param {Object|Array<Object>} record The record to inpect
+   * @param {Object|Array<Object>} record The record to inspect
    * @return {Object} The updated payload
    * @private
    */
@@ -207,7 +215,7 @@ export default DS.RESTAdapter.extend({
         if ((data = record[key])) {
           if (rel.kind === 'belongsTo') {
             if (Ember.typeOf(record[key]) === 'object') {
-              self._log('debug', 'found 1 embedded ' + rel.type.typeKey + ' record', record[key]);
+              Ember.debug('found 1 embedded %@ record: %@'.fmt(rel.type.typeKey, Ember.inspect(record[key])));
               delete record[key];
               self._payloadInject(store, payload, rel.type, data, extracted);
               record[key] = data.id;
@@ -216,7 +224,7 @@ export default DS.RESTAdapter.extend({
           else if (rel.kind === 'hasMany') {
             record[key] = data.map(function (item) {
               if (Ember.typeOf(item) === 'object') {
-                self._log('debug', 'found 1 embedded ' + rel.type.typeKey + ' record', record[key]);
+                Ember.debug('found 1 embedded %@ record: %@'.fmt(rel.type.typeKey, Ember.inspect(record[key])));
                 self._payloadInject(store, payload, rel.type, item, extracted);
                 return item.id;
               }
@@ -224,27 +232,12 @@ export default DS.RESTAdapter.extend({
             });
           }
           else {
-            self._log('fatal', 'unknown relationship kind ' + rel.kind, rel);
+            Ember.warn('unknown relationship kind %@: %@'.fmt(rel.kind, Ember.inspect(rel)));
             throw new ReferenceError('Unknown relationship kind ' + rel.kind);
           }
         }
       });
     }
     return payload;
-  },
-
-  /**
-   * Log a message if it is higher than `logLevel`
-   *
-   * @since 0.0.1
-   * @param {String} level The level
-   * @param {mixed} message* The message and data to log
-   * @private
-   */
-  _log: function (level/*, message*/) {
-    var lvl = LOG_LEVEL_CONSOLE[level];
-    if (LOG_LEVELS.indexOf(level) >= LOG_LEVELS.indexOf(this.logLevel)) {
-      console[lvl ? lvl : level].apply(console, [].slice.call(arguments, 1));
-    }
   }
 });
