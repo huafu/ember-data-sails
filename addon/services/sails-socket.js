@@ -189,13 +189,13 @@ export default Ember.Object.extend(Ember.Evented, {
    */
   _connectedSocket: function (callback) {
     if (!isAlive(this)) {
-      Ember.run.next(null, callback, new Ember.Error('Sails socket service destroyed'));
+      Ember.run.next(this, callback, new Ember.Error('Sails socket service destroyed'));
     }
     else if (this.get('isConnected')) {
-      Ember.run.next(null, callback, null, this._socket);
+      Ember.run.next(this, callback, null, this._socket);
     }
     else {
-      this.one('didConnect', null, callback, null, this._socket);
+      this.one('didConnect', Ember.run.bind(this, callback, null, this._socket));
       if (this.get('isInitialized')) {
         this._reconnect();
       }
@@ -319,7 +319,7 @@ export default Ember.Object.extend(Ember.Evented, {
       Ember.run.next(this, '_handleSocketReady');
     }
     else {
-      Ember.run.later(this, '_waitJsObject', 50);
+      Ember.run.later(this, '_waitJsObject', 10);
     }
   },
 
