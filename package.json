@@ -37,5 +37,9 @@
   ],
   "ember-addon": {
     "configPath": "tests/dummy/config"
+  },
+  "dependencies": {
+    "mkdirp": "^0.5.0",
+    "sails-generate-frontend": "^0.10.20"
   }
 }

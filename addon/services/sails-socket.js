@@ -81,7 +81,7 @@ export default Ember.Object.extend(Ember.Evented, {
   init: function () {
     this._super();
     this._listeners = {};
-    this._socket = io.socket;
+    this._socket = null;
     this.setProperties({
       pendingOperationCount: 0,
       isInitialized:         false,
@@ -160,14 +160,9 @@ export default Ember.Object.extend(Ember.Evented, {
     return new Ember.RSVP.Promise(function (resolve, reject) {
       self._connectedSocket(function (error, socket) {
         if (isAlive(self) && !error) {
-          args.push(function (err, data) {
+          args.push(function (data) {
             incPending(-1);
-            if (err) {
-              reject(err);
-            }
-            else {
-              resolve(data);
-            }
+            resolve(data);
           });
           socket[method].apply(socket, args);
         }
@@ -176,7 +171,17 @@ export default Ember.Object.extend(Ember.Evented, {
           reject(error ? error : new Ember.Error('Sails socket service destroyed'));
         }
       });
-    });
+    }, 'getting the connected Sails socket for `%@` call on %@'.fmt(method, args[0]));
+  },
+
+  /**
+   * @since 0.0.4
+   * @method trigger
+   * @inheritDoc
+   */
+  trigger: function (event/*, arg*/) {
+    Ember.debug('Sails socket: triggering event `%@`'.fmt(event));
+    return this._super.apply(this, arguments);
   },
 
   /**
@@ -189,14 +194,20 @@ export default Ember.Object.extend(Ember.Evented, {
    */
   _connectedSocket: function (callback) {
     if (!isAlive(this)) {
+      Ember.debug('cannot get Sails socket, service destroyed');
       Ember.run.next(this, callback, new Ember.Error('Sails socket service destroyed'));
     }
     else if (this.get('isConnected')) {
+      Ember.debug('Sails socket connected, giving it in next run loop');
       Ember.run.next(this, callback, null, this._socket);
     }
     else {
-      this.one('didConnect', Ember.run.bind(this, callback, null, this._socket));
+      Ember.debug('Sails socket not connected, listening for connect event before giving it');
+      this.one('didConnect', function () {
+        Ember.run.next(this, callback, null, this._socket);
+      }.bind(this));
       if (this.get('isInitialized')) {
+        Ember.debug('looks like we are initialized but not connected, reconnecting Sails socket');
         this._reconnect();
       }
     }
@@ -264,6 +275,8 @@ export default Ember.Object.extend(Ember.Evented, {
     if (!isAlive(this)) {
       return;
     }
+    Ember.debug('Sails socket js object ready');
+    this._socket = io.socket;
     this.set('isInitialized', true);
     this.trigger('didInitialize');
     this._socket.on('connect', Ember.run.bind(this, '_handleSocketConnect'));
@@ -332,6 +345,6 @@ export default Ember.Object.extend(Ember.Evented, {
    * @private
    */
   _isJsObjectReady: function () {
-    return this._socket && this._socket.socket && this._socket.socket.open;
+    return io.socket && io.socket.socket && io.socket.socket.open;
   }
 });

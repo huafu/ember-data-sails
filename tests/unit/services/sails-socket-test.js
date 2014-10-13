@@ -37,7 +37,7 @@ asyncTest('it waits for object to be ready', function () {
 asyncTest('it performs request once connected only', function () {
   var calls = [], service = subject();
   expect(2);
-  ioMock.mockRequest('get', '/toto', null, {name: 'toto'}, null, function () {
+  ioMock.mockRequest('get', '/toto', {name: 'toto'}, null, function () {
     calls.push('request');
   });
   service.on('didConnect', function () {

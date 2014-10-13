@@ -137,22 +137,16 @@ io = {
       res.onStart(res);
       setTimeout(function () {
         setTimeout(io.mockProcessQueue.bind(io), 1);
-        if (res.error) {
-          item.cb(res.error);
-        }
-        else {
-          item.cb(null, res.response);
-        }
+        item.cb(res.response);
       }, res.delay);
     }
   },
   mockMeta:         null,
-  mockRequest:      function (method, url, error, response, delay, onStart) {
+  mockRequest:      function (method, url, response, delay, onStart) {
     var mkey = method.toLowerCase();
     var mocks = io.mockMeta[mkey] = io.mockMeta[mkey] || [];
     mocks.push({
         url:      url,
-        error:    error,
         response: response,
         delay:    delay || 10,
         onStart:  onStart || function () {

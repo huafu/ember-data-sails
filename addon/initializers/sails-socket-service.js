@@ -1,6 +1,9 @@
+import SailsSocketService from 'ember-data-sails/services/sails-socket';
+
 
 export function initialize(container, application) {
-  application.inject('adapter:sails-socket', 'sailsSocket', 'service:sails-socket');
+  application.register('service:sails-socket', SailsSocketService);
+  application.inject('adapter', 'sailsSocket', 'service:sails-socket');
   application.inject('route', 'sailsSocket', 'service:sails-socket');
   application.inject('controller', 'sailsSocket', 'service:sails-socket');
 }

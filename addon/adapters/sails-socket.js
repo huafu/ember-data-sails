@@ -193,9 +193,10 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCsrfToken: function () {
+    var self = this;
     return this.get('sailsSocket').call('get', '/csrfToken').then(function (tokenObject) {
-      Ember.debug('got a new CSRF token: %@', Ember.inspect(tokenObject));
-      this.csrfToken = tokenObject._csrf;
+      Ember.debug('got a new CSRF token: %@'.fmt(Ember.inspect(tokenObject)));
+      self.set('csrfToken', tokenObject._csrf);
       return tokenObject._csrf;
     });
   },
