@@ -264,9 +264,9 @@ export default SailsBaseAdapter.extend({
       Ember.debug('setting up adapter to listen for `%@` messages'.fmt(model));
       store = this.container.lookup('store:main');
       type = store.modelFor(model);
-      socket.on(eventName + '.created', this, '_handleSocketRecordCreated', store, type);
-      socket.on(eventName + '.updated', this, '_handleSocketRecordUpdated', store, type);
-      socket.on(eventName + '.destroyed', this, '_handleSocketRecordDeleted', store, type);
+      socket.on(eventName + '.created', Ember.run.bind(this, '_handleSocketRecordCreated', store, type));
+      socket.on(eventName + '.updated', Ember.run.bind(this, '_handleSocketRecordUpdated', store, type));
+      socket.on(eventName + '.destroyed', Ember.run.bind(this, '_handleSocketRecordDeleted', store, type));
     }
   }
 });
