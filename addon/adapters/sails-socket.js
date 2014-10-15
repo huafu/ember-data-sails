@@ -57,6 +57,11 @@ export default SailsBaseAdapter.extend({
         return Ember.RSVP.reject(response);
       }
       return response;
+    }).catch(function(error) {
+      Ember.warn('socket %@ request on %@'.fmt(method, url));
+      Ember.warn('  -> request: %@'.fmt(Ember.inspect(data)));
+      Ember.warn('  <- error: %@'.fmt(Ember.inspect(error)));
+      return Ember.RSVP.reject(error);
     });
   },
 
