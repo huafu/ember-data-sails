@@ -17,14 +17,21 @@ export default DS.RESTAdapter.extend({
    * @property useCSRF
    * @type Boolean
    */
-  useCSRF:   true,
+  useCSRF:       null,
   /**
    * The csrfToken
    * @since 0.0.1
    * @property csrfToken
    * @type String
    */
-  csrfToken: null,
+  csrfToken:     null,
+  /**
+   * Are we loading CSRF token?
+   * @since 0.0.7
+   * @property isLoadingCSRF
+   * @type Boolean
+   */
+  isLoadingCSRF: null,
 
   /**
    * @since 0.0.4
@@ -33,7 +40,8 @@ export default DS.RESTAdapter.extend({
    */
   init: function () {
     this._super();
-    this.fetchCsrfToken();
+    this.set('isLoadingCSRF', false);
+    this.fetchCSRFToken();
   },
 
   /**
@@ -58,13 +66,19 @@ export default DS.RESTAdapter.extend({
    * Fetches the CSRF token if needed
    *
    * @since 0.0.3
-   * @method fetchCsrfToken
+   * @method fetchCSRFToken
+   * @return {Ember.RSVP.Promise}
    */
-  fetchCsrfToken: function () {
-    this.csrfToken = null;
-    if (this.useCSRF) {
-      this._fetchCsrfToken();
+  fetchCSRFToken: function () {
+    var self = this;
+    this.set('csrfToken', null);
+    if (this.get('useCSRF') && !this.get('isLoadingCSRF')) {
+      this.set('isLoadingCSRF', true);
+      return this._fetchCSRFToken().finally(function () {
+        self.set('isLoadingCSRF', false);
+      });
     }
+    return Ember.RSVP.resolve(null);
   },
 
   /**
