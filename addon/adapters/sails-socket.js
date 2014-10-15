@@ -109,7 +109,7 @@ export default SailsBaseAdapter.extend({
    */
   find: function (store, type/*, id, record*/) {
     var self = this;
-    return this._super.apply(arguments).then(function (payload) {
+    return this._super.apply(this, arguments).then(function (payload) {
       return self._newPayload(store, type, payload);
     });
   },

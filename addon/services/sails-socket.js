@@ -160,9 +160,14 @@ export default Ember.Object.extend(Ember.Evented, {
     return new Ember.RSVP.Promise(function (resolve, reject) {
       self._connectedSocket(function (error, socket) {
         if (isAlive(self) && !error) {
-          args.push(function (data) {
+          args.push(function (data, jwr) {
             incPending(-1);
-            resolve(data);
+            if (!jwr || Math.round(jwr.statusCode / 100) !== 2) {
+              reject(jwr || data);
+            }
+            else {
+              resolve(data);
+            }
           });
           socket[method].apply(socket, args);
         }
