@@ -2,16 +2,15 @@ import {
   moduleFor,
   test
   } from 'ember-qunit';
+import Ember from 'ember';
 import ioMock from '../../helpers/io-mock';
 
-var subject;
 
 moduleFor('service:sails-socket', 'SailsSocketService', {
   // Specify the other units that are required for this test.
   //needs: ['initializer:sails-socket-service'],
   setup:    function () {
     ioMock.mockSetup();
-    subject = this.subject.bind(this);
   },
   teardown: function () {
     ioMock.mockTeardown();
@@ -19,25 +18,27 @@ moduleFor('service:sails-socket', 'SailsSocketService', {
 });
 
 
-asyncTest('it waits for object to be ready', function () {
-  var service = subject();
+test('it waits for object to be ready', function () {
+  var service = this.subject();
   expect(3);
   strictEqual(service.get('isInitialized'), false, 'the service should not be initialized at start');
   ioMock.mockConnect(10);
   service.on('didInitialize', function () {
     ok(true, 'the didInitialize event should have been triggered');
   });
-  setTimeout(function () {
-    start();
-    strictEqual(service.get('isInitialized'), true, 'the service should have been initialized');
-  }, 100);
+  return new Ember.RSVP.Promise(function (resolve, reject) {
+    Ember.run.later(function () {
+      strictEqual(service.get('isInitialized'), true, 'the service should have been initialized');
+      resolve();
+    }, 100);
+  });
 });
 
 
-asyncTest('it performs request once connected only', function () {
-  var calls = [], service = subject();
+test('it performs request once connected only', function () {
+  var calls = [], service = this.subject();
   expect(2);
-  ioMock.mockRequest('get', '/toto', {name: 'toto'}, null, function () {
+  ioMock.mockRequest('get', '/toto', null, {name: 'toto'}, null, function () {
     calls.push('request');
   });
   service.on('didConnect', function () {
@@ -50,9 +51,14 @@ asyncTest('it performs request once connected only', function () {
     calls.push('response');
     deepEqual(response, {name: 'toto'}, 'the response should be correct');
   });
-  setTimeout(function () {
-    start();
-    deepEqual(calls, ['didInitialize', 'didConnect', 'request', 'response'], 'the calls should have been made in correct order');
-  }, 100);
   ioMock.mockConnect(10);
+  return new Ember.RSVP.Promise(function (resolve, reject) {
+    Ember.run.later(function () {
+      deepEqual(
+        calls,
+        ['didInitialize', 'didConnect', 'request', 'response'],
+        'the calls should have been made in correct order');
+      resolve();
+    }, 100);
+  });
 });

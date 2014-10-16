@@ -3,49 +3,25 @@ import Ember from 'ember';
 import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
 
 /**
- * Adapter for SailsJS sockets
+ * Adapter for SailsJS HTTP REST API
  *
- * @since 0.0.1
- * @class SailsSocketAdapter
+ * @since 0.0.8
+ * @class SailsRESTAdapter
  * @extends SailsBaseAdapter
  * @constructor
  */
 export default SailsBaseAdapter.extend({
   /**
-   * @since 0.0.1
-   * @method init
-   * @inheritDoc
-   */
-  init: function () {
-    this._super();
-    this.get('sailsSocket').on('didConnect', this, 'fetchCSRFToken', true);
-  },
-
-  /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method ajax
    * @inheritDoc
    */
   ajax: function (url, method, data) {
-    return this.socket(url, method, data);
-  },
-
-  /**
-   * Send a message over the socket
-   *
-   * @since 0.0.1
-   * @method socket
-   * @param {String} url The HTTP URL to fake
-   * @param {String} method The HTTP method to fake
-   * @param {Object} data The data to send
-   * @return {Ember.RSVP.Promise} A promise resolving to the result or an error
-   */
-  socket: function (url, method, data) {
-    method = method.toLowerCase();
     var self = this, run;
+    method = method.toUpperCase();
     run = function () {
-      return self.get('sailsSocket').call(method, url, data).then(function (response) {
-        Ember.debug('[ed-sails] socket %@ request on %@'.fmt(method, url));
+      return self._restAdapter_ajax(method, url, data).then(function (response) {
+        Ember.debug('[ed-sails] http %@ request on %@'.fmt(method, url));
         Ember.debug('[ed-sails]   -> request: %@'.fmt(Ember.inspect(data)));
         Ember.debug('[ed-sails]   <- response: %@'.fmt(Ember.inspect(response)));
         if (self.isErrorObject(response)) {
@@ -56,13 +32,13 @@ export default SailsBaseAdapter.extend({
         }
         return response;
       }).catch(function (error) {
-        Ember.warn('[ed-sails] socket %@ request on %@'.fmt(method, url));
+        Ember.warn('[ed-sails] http %@ request on %@'.fmt(method, url));
         Ember.warn('[ed-sails]   -> request: %@'.fmt(Ember.inspect(data)));
         Ember.warn('[ed-sails]   <- error: %@'.fmt(Ember.inspect(error)));
         return Ember.RSVP.reject(error);
       });
     };
-    if (method !== 'get') {
+    if (method !== 'GET') {
       return this.fetchCSRFToken().then(function () {
         this.checkCSRF(data);
         return run();
@@ -74,17 +50,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
-   * @method buildUrl
-   * @inheritDoc
-   */
-  buildURL: function (type) {
-    this._listenToSocket(type);
-    return this._super.apply(this, arguments);
-  },
-
-  /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method createRecord
    * @inheritDoc
    */
@@ -98,7 +64,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method updateRecord
    * @inheritDoc
    */
@@ -116,7 +82,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method find
    * @inheritDoc
    */
@@ -128,7 +94,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method findAll
    * @inheritDoc
    */
@@ -140,7 +106,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method findBelongsTo
    * @inheritDoc
    */
@@ -150,7 +116,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method findHasMany
    * @inheritDoc
    */
@@ -160,7 +126,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method findMany
    * @inheritDoc
    */
@@ -169,7 +135,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method findQuery
    * @inheritDoc
    */
@@ -181,7 +147,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
+   * @since 0.0.8
    * @method deleteRecord
    * @inheritDoc
    */
@@ -206,77 +172,22 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCSRFToken: function () {
-    return this.get('sailsSocket').call('get', '/csrfToken').then(function (tokenObject) {
+    return this.ajax('get', '/csrfToken').then(function (tokenObject) {
       return tokenObject._csrf;
     });
   },
 
   /**
-   * Handle a created record message
+   * Since Ember class model doesn't support `super` while in async mode, we need to copy the original
+   * `ajax` method to be able ot use it inside our own `ajax` inside async code.
    *
-   * @since 0.0.1
-   * @method _handleSocketRecordCreated
-   * @param {DS.Store} store The store to be used
-   * @param {subclass of DS.Model} type The type to push
-   * @param {Object} message The message received
+   * @since 0.0.8
+   * @method _restAdapter_ajax
    * @private
+   * @param {String} url
+   * @param {String} type The request type GET, POST, PUT, DELETE etc.
+   * @param {Object} hash
+   * @return {Promise} promise
    */
-  _handleSocketRecordCreated: function (store, type, message) {
-    var record = message.data;
-    if (!record.id && message.id) {
-      record.id = message.id;
-    }
-    store.pushPayload(type, this._newPayload(store, type, record));
-  },
-
-  /**
-   * Handle a updated record message
-   *
-   * @since 0.0.1
-   * @method _handleSocketRecordUpdated
-   * @param {DS.Store} store The store to be used
-   * @param {subclass of DS.Model} type The type to push
-   * @param {Object} message The message received
-   * @private
-   */
-  _handleSocketRecordUpdated: Ember.aliasMethod('_handleSocketRecordCreated'),
-
-  /**
-   * Handle a destroyed record message
-   *
-   * @since 0.0.1
-   * @method _handleSocketRecordDeleted
-   * @param {DS.Store} store The store to be used
-   * @param {subclass of DS.Model} type The type to push
-   * @param {Object} message The message received
-   * @private
-   */
-  _handleSocketRecordDeleted: function (store, type, message) {
-    var record = store.getById(type.typeKey, message.id);
-    if (record && typeof record.get('dirtyType') === 'undefined') {
-      record.unloadRecord();
-    }
-  },
-
-  /**
-   * Listen to socket message for a given model
-   *
-   * @since 0.0.1
-   * @method _listenToSocket
-   * @param {String} model The model name to listen for events
-   * @private
-   */
-  _listenToSocket: function (model) {
-    var store, type;
-    var eventName = Ember.String.camelize(model).toLowerCase();
-    var socket = this.get('sailsSocket');
-    if (socket.listenFor(eventName, true)) {
-      Ember.debug('[ed-sails] setting up adapter to listen for `%@` messages'.fmt(model));
-      store = this.container.lookup('store:main');
-      type = store.modelFor(model);
-      socket.on(eventName + '.created', Ember.run.bind(this, '_handleSocketRecordCreated', store, type));
-      socket.on(eventName + '.updated', Ember.run.bind(this, '_handleSocketRecordUpdated', store, type));
-      socket.on(eventName + '.destroyed', Ember.run.bind(this, '_handleSocketRecordDeleted', store, type));
-    }
-  }
+  _restAdapter_ajax: DS.RESTAdapter.proto().ajax
 });

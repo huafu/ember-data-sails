@@ -41,7 +41,7 @@ export default DS.RESTAdapter.extend({
   init: function () {
     this._super();
     this.set('isLoadingCSRF', false);
-    this.fetchCSRFToken();
+    this.set('csrfToken', null);
   },
 
   /**
@@ -54,7 +54,7 @@ export default DS.RESTAdapter.extend({
     var data = Ember.$.parseJSON(jqXHR.responseText);
 
     if (data.errors) {
-      Ember.warn('error returned from Sails' + Ember.inspect(data));
+      Ember.warn('[ed-sails] error returned from Sails' + Ember.inspect(data));
       return new DS.InvalidError(this.formatError(data));
     }
     else {
@@ -67,16 +67,44 @@ export default DS.RESTAdapter.extend({
    *
    * @since 0.0.3
    * @method fetchCSRFToken
+   * @param {Boolean} [force] If `true`, the token will be fetched even if it has already been fetched
    * @return {Ember.RSVP.Promise}
    */
-  fetchCSRFToken: function () {
+  fetchCSRFToken: function (force) {
     var self = this;
-    this.set('csrfToken', null);
-    if (this.get('useCSRF') && !this.get('isLoadingCSRF')) {
-      this.set('isLoadingCSRF', true);
-      return this._fetchCSRFToken().finally(function () {
-        self.set('isLoadingCSRF', false);
-      });
+    if (this.get('useCSRF') && (force || !this.get('csrfToken'))) {
+      if (this.get('isLoadingCSRF')) {
+        return new Ember.RSVP.Promise(function (resolve, reject) {
+          self.one('didLoadCSRF', function (token, error) {
+            if (token) {
+              resolve(token);
+            }
+            else {
+              reject(error);
+            }
+          });
+        }, 'waiting for CSRF to load');
+      }
+      else {
+        this.set('isLoadingCSRF', true);
+        this.set('csrfToken', null);
+        Ember.debug('[ed-sails] fetching CSRF token...');
+        return this._fetchCSRFToken()
+          .then(function (token) {
+            Ember.debug('[ed-sails] got a new CSRF token: %@'.fmt(token));
+            self.set('csrfToken', token);
+            Ember.run.next(self, 'trigger', 'didLoadCSRF', token);
+            return token;
+          })
+          .catch(function (error) {
+            Ember.debug('[ed-sails] error trying to get new CSRF token: %@'.fmt(Ember.inspect(error)));
+            Ember.run.next(self, 'trigger', 'didLoadCSRF', null, error);
+            return error;
+          })
+          .finally(function () {
+            self.set('isLoadingCSRF', false);
+          });
+      }
     }
     return Ember.RSVP.resolve(null);
   },
@@ -131,9 +159,9 @@ export default DS.RESTAdapter.extend({
     if (!this.useCSRF) {
       return data;
     }
-    Ember.debug('adding CSRF token');
+    Ember.debug('[ed-sails] adding CSRF token');
     if (!this.csrfToken || this.csrfToken.length === 0) {
-      Ember.warn('CSRF not fetched yet');
+      Ember.warn('[ed-sails] CSRF not fetched yet');
       throw new DS.Error("CSRF Token not fetched yet.");
     }
     data._csrf = this.csrfToken;
@@ -153,7 +181,7 @@ export default DS.RESTAdapter.extend({
    */
   _newPayload: function (store, type, record) {
     var res = {}, extracted;
-    Ember.debug('created new payload');
+    Ember.debug('[ed-sails] created new payload');
     if (arguments.length > 0) {
       extracted = [];
       this._payloadInject(store, res, type, record, extracted);
@@ -190,13 +218,13 @@ export default DS.RESTAdapter.extend({
       records.forEach(function (record) {
         var id = '' + record.id;
         if (!record.id) {
-          Ember.warn('got a record without id: %@'.fmt(Ember.inspect(record)));
+          Ember.warn('[ed-sails] got a record without id: %@'.fmt(Ember.inspect(record)));
           throw new ReferenceError('Got a record without id for ' + typeKey);
         }
         if (!(id in index)) {
           index[id] = 0;
           payload[typeKey].push(record);
-          Ember.debug('injected one %@ record: %@'.fmt(typeKey, Ember.inspect(record)));
+          Ember.debug('[ed-sails] injected one %@ record: %@'.fmt(typeKey, Ember.inspect(record)));
           toExtract.push(record);
         }
       });
@@ -229,7 +257,7 @@ export default DS.RESTAdapter.extend({
         if ((data = record[key])) {
           if (rel.kind === 'belongsTo') {
             if (Ember.typeOf(record[key]) === 'object') {
-              Ember.debug('found 1 embedded %@ record: %@'.fmt(rel.type.typeKey, Ember.inspect(record[key])));
+              Ember.debug('[ed-sails] found 1 embedded %@ record: %@'.fmt(rel.type.typeKey, Ember.inspect(record[key])));
               delete record[key];
               self._payloadInject(store, payload, rel.type, data, extracted);
               record[key] = data.id;
@@ -238,7 +266,7 @@ export default DS.RESTAdapter.extend({
           else if (rel.kind === 'hasMany') {
             record[key] = data.map(function (item) {
               if (Ember.typeOf(item) === 'object') {
-                Ember.debug('found 1 embedded %@ record: %@'.fmt(rel.type.typeKey, Ember.inspect(record[key])));
+                Ember.debug('[ed-sails] found 1 embedded %@ record: %@'.fmt(rel.type.typeKey, Ember.inspect(record[key])));
                 self._payloadInject(store, payload, rel.type, item, extracted);
                 return item.id;
               }
@@ -246,7 +274,7 @@ export default DS.RESTAdapter.extend({
             });
           }
           else {
-            Ember.warn('unknown relationship kind %@: %@'.fmt(rel.kind, Ember.inspect(rel)));
+            Ember.warn('[ed-sails] unknown relationship kind %@: %@'.fmt(rel.kind, Ember.inspect(rel)));
             throw new ReferenceError('Unknown relationship kind ' + rel.kind);
           }
         }
