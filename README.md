@@ -65,6 +65,6 @@ Adapters and tools for Ember to work well with Sails.
 
 ## Authors
 
-_While this was first inspired from [ember-data-sails-adapter](https://github.com/bmac/ember-data-sails-adapter), it is now been fully re-written, with a totally different approach, and, as of the day this was written, with more features._
+_While this was first inspired from [ember-data-sails-adapter](https://github.com/bmac/ember-data-sails-adapter), it has now been fully re-written, with a totally different approach, and, as of the day this was written, with more features._
 
 * ![Huafu Gandon](https://s.gravatar.com/avatar/950590a0d4bc96f4a239cac955112eeb?s=24) [Huafu Gandon](https://github.com/huafu)
