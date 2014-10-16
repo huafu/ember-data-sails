@@ -64,7 +64,7 @@ export default SailsBaseAdapter.extend({
     };
     if (method !== 'get') {
       return this.fetchCSRFToken().then(function () {
-        this.checkCSRF(data);
+        self.checkCSRF(data);
         return run();
       });
     }
