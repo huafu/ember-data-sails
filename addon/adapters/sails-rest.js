@@ -20,7 +20,7 @@ export default SailsBaseAdapter.extend({
     var self = this, run;
     method = method.toUpperCase();
     run = function () {
-      return self._restAdapter_ajax(method, url, data).then(function (response) {
+      return self._restAdapter_ajax(url, method, data).then(function (response) {
         Ember.debug('[ed-sails] http %@ request on %@'.fmt(method, url));
         Ember.debug('[ed-sails]   -> request: %@'.fmt(Ember.inspect(data)));
         Ember.debug('[ed-sails]   <- response: %@'.fmt(Ember.inspect(response)));

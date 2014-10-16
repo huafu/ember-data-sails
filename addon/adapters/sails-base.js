@@ -8,9 +8,10 @@ import Ember from 'ember';
  * @since 0.0.1
  * @class SailsBaseAdapter
  * @extends DS.RESTAdapter
+ * @uses Ember.Evented
  * @constructor
  */
-export default DS.RESTAdapter.extend({
+export default DS.RESTAdapter.extend(Ember.Evented, {
   /**
    * Whether to use CSRF
    * @since 0.0.1

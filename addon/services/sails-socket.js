@@ -22,6 +22,7 @@ function isAlive(obj) {
  * @since 0.0.4
  * @class SailsSocketService
  * @extends Ember.Object
+ * @uses Ember.Evented
  * @constructor
  */
 export default Ember.Object.extend(Ember.Evented, {
