@@ -21,9 +21,9 @@ export default SailsBaseAdapter.extend({
     method = method.toUpperCase();
     run = function () {
       return self._restAdapter_ajax(url, method, data).then(function (response) {
-        Ember.debug('[ed-sails] http %@ request on %@'.fmt(method, url));
-        Ember.debug('[ed-sails]   -> request: %@'.fmt(Ember.inspect(data)));
-        Ember.debug('[ed-sails]   <- response: %@'.fmt(Ember.inspect(response)));
+        self.info('http %@ request on %@: SUCCESS'.fmt(method, url));
+        self.debug('  → request:', data);
+        self.debug('  ← response:', response);
         if (self.isErrorObject(response)) {
           if (response.errors) {
             return Ember.RSVP.reject(new DS.InvalidError(self.formatError(response)));
@@ -32,9 +32,9 @@ export default SailsBaseAdapter.extend({
         }
         return response;
       }).catch(function (error) {
-        Ember.warn('[ed-sails] http %@ request on %@'.fmt(method, url));
-        Ember.warn('[ed-sails]   -> request: %@'.fmt(Ember.inspect(data)));
-        Ember.warn('[ed-sails]   <- error: %@'.fmt(Ember.inspect(error)));
+        self.warn('http %@ request on %@: ERROR'.fmt(method, url));
+        self.info('  → request: %@', data);
+        self.info('  ← error: %@', error);
         return Ember.RSVP.reject(error);
       });
     };

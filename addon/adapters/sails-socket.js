@@ -45,9 +45,9 @@ export default SailsBaseAdapter.extend({
     var self = this, run;
     run = function () {
       return self.get('sailsSocket').call(method, url, data).then(function (response) {
-        Ember.debug('[ed-sails] socket %@ request on %@'.fmt(method, url));
-        Ember.debug('[ed-sails]   -> request: %@'.fmt(Ember.inspect(data)));
-        Ember.debug('[ed-sails]   <- response: %@'.fmt(Ember.inspect(response)));
+        self.info('socket %@ request on %@: SUCCESS'.fmt(method, url));
+        self.debug('  → request:', data);
+        self.debug('  ← response:', response);
         if (self.isErrorObject(response)) {
           if (response.errors) {
             return Ember.RSVP.reject(new DS.InvalidError(self.formatError(response)));
@@ -56,9 +56,9 @@ export default SailsBaseAdapter.extend({
         }
         return response;
       }).catch(function (error) {
-        Ember.warn('[ed-sails] socket %@ request on %@'.fmt(method, url));
-        Ember.warn('[ed-sails]   -> request: %@'.fmt(Ember.inspect(data)));
-        Ember.warn('[ed-sails]   <- error: %@'.fmt(Ember.inspect(error)));
+        self.warn('socket %@ request on %@: ERROR'.fmt(method, url));
+        self.info('  → request:', data);
+        self.info('  ← error:', error);
         return Ember.RSVP.reject(error);
       });
     };
@@ -271,7 +271,7 @@ export default SailsBaseAdapter.extend({
     var eventName = Ember.String.camelize(model).toLowerCase();
     var socket = this.get('sailsSocket');
     if (socket.listenFor(eventName, true)) {
-      Ember.debug('[ed-sails] setting up adapter to listen for `%@` messages'.fmt(model));
+      this.notice('setting up adapter to listen for `%@` messages'.fmt(model));
       store = this.container.lookup('store:main');
       type = store.modelFor(model);
       socket.on(eventName + '.created', Ember.run.bind(this, '_handleSocketRecordCreated', store, type));

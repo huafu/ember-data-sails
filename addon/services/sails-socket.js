@@ -1,5 +1,6 @@
 /* global io */
 import Ember from 'ember';
+import WithLoggerMixin from '../mixins/with-logger';
 
 /**
  * Shortcut to know if an object is alive or not
@@ -10,10 +11,7 @@ import Ember from 'ember';
  * @private
  */
 function isAlive(obj) {
-  if (!obj || obj.isDestroying || obj.isDestroyed) {
-    return false;
-  }
-  return true;
+  return !(!obj || obj.isDestroying || obj.isDestroyed);
 }
 
 /**
@@ -23,9 +21,10 @@ function isAlive(obj) {
  * @class SailsSocketService
  * @extends Ember.Object
  * @uses Ember.Evented
+ * @uses WithLoggerMixin
  * @constructor
  */
-export default Ember.Object.extend(Ember.Evented, {
+export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
   /**
    * Holds our sails socket
    * @since 0.0.4
@@ -113,7 +112,7 @@ export default Ember.Object.extend(Ember.Evented, {
    * @return {Boolean} Returns `true` if the some change has been triggered, else `false`
    */
   listenFor: function (event, listen) {
-    var cb, sockMethod;
+    var cb, sockMethod, self = this;
     listen = listen == null ? true : listen;
     if (listen && !this._listeners[event]) {
       cb = this._listeners[event] = Ember.run.bind(this, '_handleSocketMessage', event);
@@ -125,13 +124,13 @@ export default Ember.Object.extend(Ember.Evented, {
     if (sockMethod) {
       this._connectedSocket(function (error, socket) {
         if (error) {
-          Ember.debug('[ed-sails] error trying to %@ listener for `%@` on the socket - '.fmt(sockMethod, event) + error);
+          self.error('error trying to %@ listener for `%@` on the socket:'.fmt(sockMethod, event), error);
         }
         else {
           socket[sockMethod + 'Listener'](event, cb);
         }
         if ((listen && error) || (!listen && !error)) {
-          delete this._listeners[event];
+          delete self._listeners[event];
         }
         if (error) {
           throw error;
@@ -186,7 +185,7 @@ export default Ember.Object.extend(Ember.Evented, {
    * @inheritDoc
    */
   trigger: function (event/*, arg*/) {
-    Ember.debug('[ed-sails] triggering event `%@`'.fmt(event));
+    this.debug('triggering event `%@`'.fmt(event));
     return this._super.apply(this, arguments);
   },
 
@@ -200,20 +199,20 @@ export default Ember.Object.extend(Ember.Evented, {
    */
   _connectedSocket: function (callback) {
     if (!isAlive(this)) {
-      Ember.debug('[ed-sails] cannot get socket, service destroyed');
+      this.wran('cannot get socket, service destroyed');
       Ember.run.next(this, callback, new Ember.Error('Sails socket service destroyed'));
     }
     else if (this.get('isConnected')) {
-      Ember.debug('[ed-sails] socket connected, giving it in next run loop');
+      this.debug('socket connected, giving it in next run loop');
       Ember.run.next(this, callback, null, this._socket);
     }
     else {
-      Ember.debug('[ed-sails] socket not connected, listening for connect event before giving it');
+      this.info('socket not connected, listening for connect event before giving it');
       this.one('didConnect', function () {
         Ember.run.next(this, callback, null, this._socket);
       }.bind(this));
       if (this.get('isInitialized')) {
-        Ember.debug('[ed-sails] looks like we are initialized but not connected, reconnecting socket');
+        this.info('looks like we are initialized but not connected, reconnecting socket');
         this._reconnect();
       }
     }
@@ -245,7 +244,7 @@ export default Ember.Object.extend(Ember.Evented, {
       if ((cb = this._listeners[event])) {
         this._socket.removeListener(event, cb);
         this._socket.addListener(event, cb);
-        Ember.debug('[ed-sails] re-attached event `%@` on socket'.fmt(event));
+        this.info('re-attached event `%@` on socket'.fmt(event));
       }
     }
     return this;
@@ -281,7 +280,7 @@ export default Ember.Object.extend(Ember.Evented, {
     if (!isAlive(this)) {
       return;
     }
-    Ember.debug('[ed-sails] socket core object ready');
+    this.info('socket core object ready');
     this._socket = io.socket;
     this.set('isInitialized', true);
     this.trigger('didInitialize');
