@@ -179,15 +179,16 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @param {DS.Store} store The store to be used
    * @param {subclass of DS.Model} [type] The model of the record(s) to inject
    * @param {Object|Array<Object>} [record] The record(s) to inject
+   * @param {Function} _onRecordFound A method to call with each record found (internal use only)
    * @return {Object} The created payload
    * @private
    */
-  _newPayload: function (store, type, record) {
+  _newPayload: function (store, type, record, _onRecordFound) {
     var res = {}, extracted;
     this.debug('creating new payload');
     if (arguments.length > 0) {
       extracted = [];
-      this._payloadInject(store, res, type, record, extracted);
+      this._payloadInject(store, res, type, record, extracted, _onRecordFound || Ember.K);
     }
     return res;
   },
@@ -201,10 +202,11 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @param {Object} payload The payload in which to inject the record(s)
    * @param {subclass of DS.Model} type The model of the record(s) to inject
    * @param {Object|Array<Object>} record The record(s) to inject
+   * @param {Function} _onRecordFound A method to call with each record found (internal use only)
    * @return {Object} The updated payload
    * @private
    */
-  _payloadInject: function (store, payload, type, record, _extracted) {
+  _payloadInject: function (store, payload, type, record, _extracted, _onRecordFound) {
     var index, records, toExtract,
       self = this,
       typeKey = type.typeKey.pluralize();
@@ -232,7 +234,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
         }
       });
       toExtract.forEach(function (record) {
-        self._payloadExtractEmbedded(store, payload, type, record, _extracted);
+        self._payloadExtractEmbedded(store, payload, type, record, _extracted, _onRecordFound);
       });
     }
     return payload;
@@ -247,10 +249,11 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @param {Object} payload The payload in which to inject the found record(s)
    * @param {subclass of DS.Model} type The model of the record to inspect
    * @param {Object|Array<Object>} record The record to inspect
+   * @param {Function} _onRecordFound A method to call with each record found (internal use only)
    * @return {Object} The updated payload
    * @private
    */
-  _payloadExtractEmbedded: function (store, payload, type, record, _extracted) {
+  _payloadExtractEmbedded: function (store, payload, type, record, _extracted, _onRecordFound) {
     var extracted = _extracted ? _extracted : [],
       self = this;
     if (extracted.indexOf(record) < 0) {
@@ -269,7 +272,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
           else if (rel.kind === 'hasMany') {
             record[key] = data.map(function (item) {
               if (Ember.typeOf(item) === 'object') {
-                self.debug('found 1 embedded %@ record:'.fmt(rel.type.typeKey), record[key]);
+                self.debug('found 1 embedded %@ record:'.fmt(rel.type.typeKey), item);
                 self._payloadInject(store, payload, rel.type, item, extracted);
                 return item.id;
               }
@@ -282,6 +285,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
           }
         }
       });
+      _onRecordFound(type, record);
     }
     return payload;
   }
