@@ -146,13 +146,13 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * method is accepting as last parameter (which would not be given) a function to call once the
    * process is done (as a NodeJS callback).
    *
-   * @since 0.0.4
-   * @method call
+   * @since 0.0.11
+   * @method request
    * @param {String} method The name of the method to call
    * @param {mixed} [arg]* Any argument to give to the method
    * @returns {*}
    */
-  call: function (method/*, arg*/) {
+  request: function (method/*, arg*/) {
     var self = this,
       args = [].slice.call(arguments, 1),
       incPending = this.incrementProperty.bind(this, 'pendingOperationCount');
@@ -176,7 +176,7 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
           reject(error ? error : new Ember.Error('Sails socket service destroyed'));
         }
       });
-    }, 'getting the connected Sails socket for `%@` call on %@'.fmt(method, args[0]));
+    }, 'getting the connected Sails socket for `%@` request on %@'.fmt(method, args[0]));
   },
 
   /**

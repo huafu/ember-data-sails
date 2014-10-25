@@ -47,7 +47,7 @@ test('it performs request once connected only', function () {
   service.on('didInitialize', function () {
     calls.push('didInitialize');
   });
-  service.call('get', '/toto', null).then(function (response) {
+  service.request('get', '/toto', null).then(function (response) {
     calls.push('response');
     deepEqual(response, {name: 'toto'}, 'the response should be correct');
   });

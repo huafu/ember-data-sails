@@ -46,29 +46,20 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * @since 0.0.1
-   * @method ajax
-   * @inheritDoc
-   */
-  ajax: function (url, method, data) {
-    return this.socket(url, method, data);
-  },
-
-  /**
    * Send a message over the socket
    *
    * @since 0.0.1
-   * @method socket
+   * @method ajax
    * @param {String} url The HTTP URL to fake
    * @param {String} method The HTTP method to fake
    * @param {Object} data The data to send
    * @return {Ember.RSVP.Promise} A promise resolving to the result or an error
    */
-  socket: function (url, method, data) {
+  ajax: function (url, method, data) {
     method = method.toLowerCase();
     var self = this, run;
     run = function () {
-      return self.get('sailsSocket').call(method, url, data).then(function (response) {
+      return self.get('sailsSocket').request(method, url, data).then(function (response) {
         self.info('socket %@ request on %@: SUCCESS'.fmt(method, url));
         self.debug('  → request:', data);
         self.debug('  ← response:', response);
@@ -78,6 +69,8 @@ export default SailsBaseAdapter.extend({
           }
           return Ember.RSVP.reject(response);
         }
+        // TODO: flag the response as coming from the socket so that the serializer can trigger our
+        // TODO: gotNewPayload and we can detect if not coming from the socket
         return response;
       }).catch(function (error) {
         self.warn('socket %@ request on %@: ERROR'.fmt(method, url));
@@ -95,120 +88,6 @@ export default SailsBaseAdapter.extend({
     else {
       return run();
     }
-  },
-
-  /**
-   * @since 0.0.1
-   * @method createRecord
-   * @inheritDoc
-   */
-  createRecord: function (store, type, record) {
-    var serializer = store.serializerFor(type.typeKey);
-    var data = serializer.serialize(record, { includeId: true });
-    var self = this;
-    return this.ajax(this.buildURL(type.typeKey, null, record), "POST", data).then(function (payload) {
-      return self._newPayloadFromSocket(store, type, payload);
-    });
-  },
-
-  /**
-   * @since 0.0.1
-   * @method updateRecord
-   * @inheritDoc
-   */
-  updateRecord: function (store, type, record) {
-    var serializer = store.serializerFor(type.typeKey);
-    var data = serializer.serialize(record, { includeId: true });
-    var self = this;
-    return this.ajax(
-      this.buildURL(type.typeKey, data.id, record), "PUT", data
-    ).then(
-      function (payload) {
-        return self._newPayloadFromSocket(store, type, payload);
-      }
-    );
-  },
-
-  /**
-   * @since 0.0.1
-   * @method find
-   * @inheritDoc
-   */
-  find: function (store, type/*, id, record*/) {
-    var self = this;
-    return this._super.apply(this, arguments).then(function (payload) {
-      return self._newPayloadFromSocket(store, type, payload);
-    });
-  },
-
-  /**
-   * @since 0.0.1
-   * @method findAll
-   * @inheritDoc
-   */
-  findAll: function (store, type/*, sinceToken*/) {
-    var self = this;
-    return this._super.apply(this, arguments).then(function (payload) {
-      return self._newPayloadFromSocket(store, type, payload);
-    });
-  },
-
-  /**
-   * @since 0.0.1
-   * @method findBelongsTo
-   * @inheritDoc
-   */
-  findBelongsTo: function (/*store, record, url*/) {
-    // TODO: check what is returning Sails in that case
-    return this._super.apply(this, arguments);
-  },
-
-  /**
-   * @since 0.0.1
-   * @method findHasMany
-   * @inheritDoc
-   */
-  findHasMany: function (/*store, record, url*/) {
-    // TODO: check what is returning Sails in that case
-    return this._super.apply(this, arguments);
-  },
-
-  /**
-   * @since 0.0.1
-   * @method findMany
-   * @inheritDoc
-   */
-  findMany: function (store, type, ids/*, records*/) {
-    return this.findQuery(store, type, {where: {id: ids}});
-  },
-
-  /**
-   * @since 0.0.1
-   * @method findQuery
-   * @inheritDoc
-   */
-  findQuery: function (store, type, query) {
-    var self = this;
-    return this.ajax(this.buildURL(type.typeKey), 'GET', query).then(function (payload) {
-      return self._newPayloadFromSocket(store, type, payload);
-    });
-  },
-
-  /**
-   * @since 0.0.1
-   * @method deleteRecord
-   * @inheritDoc
-   */
-  deleteRecord: function (store, type, record) {
-    var self = this;
-    return this.ajax(
-      this.buildURL(type.typeKey, record.get('id'), record),
-      'DELETE',
-      {}
-    ).then(function (payload) {
-        return self._newPayloadFromSocket(store, type, payload);
-      }
-    );
   },
 
   /**
@@ -234,7 +113,7 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCSRFToken: function () {
-    return this.get('sailsSocket').call('get', '/csrfToken').then(function (tokenObject) {
+    return this.get('sailsSocket').request('get', '/csrfToken').then(function (tokenObject) {
       return tokenObject._csrf;
     });
   },
@@ -254,7 +133,7 @@ export default SailsBaseAdapter.extend({
     if (!record.id && message.id) {
       record.id = message.id;
     }
-    store.pushPayload(type, this._newPayload(store, type, record));
+    store.pushPayload(type, record);
   },
 
   /**
@@ -308,9 +187,14 @@ export default SailsBaseAdapter.extend({
     }
   },
 
+
+
+  // TO BE REMOVED =========
+
+
   /**
    * As well as doing the same as its super method, schedule subscription for each record's socket
-   * message that are in created payloads if we are not comin from the socket
+   * message that are in created payloads if we are not coming from the socket
    *
    * @since 0.0.11
    * @method _newPayload
@@ -381,7 +265,7 @@ export default SailsBaseAdapter.extend({
       }
       this.notice('asking the API to subscribe to some records of %@ model(s)'.fmt(Ember.keys(data).join(', ')));
       // ask the API to subscribe to those records
-      this.get('sailsSocket').call(
+      this.get('sailsSocket').request(
         opt.subscribeMethod.toLowerCase(), opt.subscribePath, data
       )
         .then(function (result) {

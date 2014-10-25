@@ -14,6 +14,7 @@ import WithLoggerMixin from '../mixins/with-logger';
  * @constructor
  */
 export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
+  defaultSerializer: '-sails',
   /**
    * Whether to use CSRF
    * @since 0.0.1
@@ -169,124 +170,5 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
     }
     data._csrf = this.csrfToken;
     return data;
-  },
-
-  /**
-   * Creates a new payload and inject the optionally given record of given type
-   *
-   * @since 0.0.1
-   * @method _newPayload
-   * @param {DS.Store} store The store to be used
-   * @param {subclass of DS.Model} [type] The model of the record(s) to inject
-   * @param {Object|Array<Object>} [record] The record(s) to inject
-   * @param {Function} _onRecordFound A method to call with each record found (internal use only)
-   * @return {Object} The created payload
-   * @private
-   */
-  _newPayload: function (store, type, record, _onRecordFound) {
-    var res = {}, extracted;
-    this.debug('creating new payload');
-    if (arguments.length > 0) {
-      extracted = [];
-      this._payloadInject(store, res, type, record, extracted, _onRecordFound || Ember.K);
-    }
-    return res;
-  },
-
-  /**
-   * Inject the given record of given type into the given payload
-   *
-   * @since 0.0.1
-   * @method _payloadInject
-   * @param {DS.Store} store The store to be used
-   * @param {Object} payload The payload in which to inject the record(s)
-   * @param {subclass of DS.Model} type The model of the record(s) to inject
-   * @param {Object|Array<Object>} record The record(s) to inject
-   * @param {Function} _onRecordFound A method to call with each record found (internal use only)
-   * @return {Object} The updated payload
-   * @private
-   */
-  _payloadInject: function (store, payload, type, record, _extracted, _onRecordFound) {
-    var index, records, toExtract,
-      self = this,
-      typeKey = type.typeKey.pluralize();
-    if (!payload[typeKey]) {
-      payload[typeKey] = [];
-    }
-    if (record) {
-      records = Ember.typeOf(record) === 'array' ? record : [record];
-      index = {};
-      toExtract = [];
-      payload[typeKey].forEach(function (record) {
-        index['' + record.id] = 0;
-      });
-      records.forEach(function (record) {
-        var id = '' + record.id;
-        if (!record.id) {
-          self.error('got a record without id:', record);
-          throw new DS.Error('Got a record without id for ' + typeKey);
-        }
-        if (!(id in index)) {
-          index[id] = 0;
-          payload[typeKey].push(record);
-          self.debug('injected one %@ record:'.fmt(typeKey), record);
-          toExtract.push(record);
-        }
-      });
-      toExtract.forEach(function (record) {
-        self._payloadExtractEmbedded(store, payload, type, record, _extracted, _onRecordFound);
-      });
-    }
-    return payload;
-  },
-
-  /**
-   * Extract embedded records from the given record and inject them into the given payload
-   *
-   * @since 0.0.1
-   * @method _payloadExtractEmbedded
-   * @param {DS.Store} store The store to be used
-   * @param {Object} payload The payload in which to inject the found record(s)
-   * @param {subclass of DS.Model} type The model of the record to inspect
-   * @param {Object|Array<Object>} record The record to inspect
-   * @param {Function} _onRecordFound A method to call with each record found (internal use only)
-   * @return {Object} The updated payload
-   * @private
-   */
-  _payloadExtractEmbedded: function (store, payload, type, record, _extracted, _onRecordFound) {
-    var extracted = _extracted ? _extracted : [],
-      self = this;
-    if (extracted.indexOf(record) < 0) {
-      extracted.push(record);
-      type.eachRelationship(function (key, rel) {
-        var data;
-        if ((data = record[key])) {
-          if (rel.kind === 'belongsTo') {
-            if (Ember.typeOf(record[key]) === 'object') {
-              self.debug('found 1 embedded %@ record:'.fmt(rel.type.typeKey), record[key]);
-              delete record[key];
-              self._payloadInject(store, payload, rel.type, data, extracted);
-              record[key] = data.id;
-            }
-          }
-          else if (rel.kind === 'hasMany') {
-            record[key] = data.map(function (item) {
-              if (Ember.typeOf(item) === 'object') {
-                self.debug('found 1 embedded %@ record:'.fmt(rel.type.typeKey), item);
-                self._payloadInject(store, payload, rel.type, item, extracted);
-                return item.id;
-              }
-              return item;
-            });
-          }
-          else {
-            self.warn('unknown relationship kind %@:'.fmt(rel.kind), rel);
-            throw new DS.Error('Unknown relationship kind ' + rel.kind);
-          }
-        }
-      });
-      _onRecordFound(type, record);
-    }
-    return payload;
   }
 });
