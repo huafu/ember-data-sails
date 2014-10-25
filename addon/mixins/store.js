@@ -11,7 +11,7 @@ var StoreMixin = Ember.Mixin.create({
    * @param {Object} payload
    * @param {Boolean} [subscribe] Whether to subscribe to pushed models or not (Sails socket)
    */
-  pushPayload: function (type, payload, subscribe) {
+  pushPayload: function (/*type, payload, subscribe*/) {
     var args = [].slice.call(arguments), sub = false,
       old = this._pushSubscribes;
     if (Ember.typeOf(args[args.length - 1]) === 'boolean') {
@@ -28,7 +28,7 @@ var StoreMixin = Ember.Mixin.create({
    * @method push
    * @inheritDoc
    */
-  push: function (typeName, data, _partial) {
+  push: function (typeName/*, data, _partial*/) {
     var res = this._super.apply(this, arguments), id, type, adapter;
     if (this._pushSubscribes && res && (id = res.get('id'))) {
       type = this.modelFor(typeName);

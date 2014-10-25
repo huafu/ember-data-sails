@@ -1,5 +1,4 @@
 import DS from 'ember-data';
-import Ember from 'ember';
 import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
 
 /**
@@ -12,41 +11,20 @@ import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
  */
 export default SailsBaseAdapter.extend({
   /**
-   * @since 0.0.8
-   * @method ajax
-   * @inheritDoc
+   * Sends a request over HTTP
+   *
+   * @since 0.0.11
+   * @method _request
+   * @param {Object} out
+   * @param {String} url
+   * @param {String} method
+   * @param {Object} data
+   * @returns {Ember.RSVP.Promise}
+   * @private
    */
-  ajax: function (url, method, data) {
-    var self = this, run;
-    method = method.toUpperCase();
-    run = function () {
-      return self._restAdapter_ajax(url, method, data).then(function (response) {
-        self.info('http %@ request on %@: SUCCESS'.fmt(method, url));
-        self.debug('  → request:', data);
-        self.debug('  ← response:', response);
-        if (self.isErrorObject(response)) {
-          if (response.errors) {
-            return Ember.RSVP.reject(new DS.InvalidError(self.formatError(response)));
-          }
-          return Ember.RSVP.reject(response);
-        }
-        return response;
-      }).catch(function (error) {
-        self.warn('http %@ request on %@: ERROR'.fmt(method, url));
-        self.info('  → request: %@', data);
-        self.info('  ← error: %@', error);
-        return Ember.RSVP.reject(error);
-      });
-    };
-    if (method !== 'GET') {
-      return this.fetchCSRFToken().then(function () {
-        self.checkCSRF(data);
-        return run();
-      });
-    }
-    else {
-      return run();
-    }
+  _request: function(out, url, method, data) {
+    out.protocol = 'http';
+    return this._restAdapter_ajax.call(url, method, data);
   },
 
   /**
@@ -64,8 +42,7 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * Since Ember class model doesn't support `super` while in async mode, we need to copy the original
-   * `ajax` method to be able ot use it inside our own `ajax` inside async code.
+   * We need to copy the original `ajax` method to be able ot use it inside our own `_request`
    *
    * @since 0.0.8
    * @method _restAdapter_ajax
@@ -73,7 +50,7 @@ export default SailsBaseAdapter.extend({
    * @param {String} url
    * @param {String} type The request type GET, POST, PUT, DELETE etc.
    * @param {Object} hash
-   * @return {Promise} promise
+   * @return {Ember.RSVP.Promise} promise
    */
   _restAdapter_ajax: DS.RESTAdapter.proto().ajax
 });

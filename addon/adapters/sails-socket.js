@@ -1,4 +1,3 @@
-import DS from 'ember-data';
 import Ember from 'ember';
 import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
 
@@ -46,48 +45,20 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
-   * Send a message over the socket
+   * Sends a request over the socket
    *
-   * @since 0.0.1
-   * @method ajax
-   * @param {String} url The HTTP URL to fake
-   * @param {String} method The HTTP method to fake
-   * @param {Object} data The data to send
-   * @return {Ember.RSVP.Promise} A promise resolving to the result or an error
+   * @since 0.0.11
+   * @method _request
+   * @param {Object} out
+   * @param {String} url
+   * @param {String} method
+   * @param {Object} data
+   * @returns {Ember.RSVP.Promise}
+   * @private
    */
-  ajax: function (url, method, data) {
-    method = method.toLowerCase();
-    var self = this, run;
-    run = function () {
-      return self.get('sailsSocket').request(method, url, data).then(function (response) {
-        self.info('socket %@ request on %@: SUCCESS'.fmt(method, url));
-        self.debug('  → request:', data);
-        self.debug('  ← response:', response);
-        if (self.isErrorObject(response)) {
-          if (response.errors) {
-            return Ember.RSVP.reject(new DS.InvalidError(self.formatError(response)));
-          }
-          return Ember.RSVP.reject(response);
-        }
-        // TODO: flag the response as coming from the socket so that the serializer can trigger our
-        // TODO: gotNewPayload and we can detect if not coming from the socket
-        return response;
-      }).catch(function (error) {
-        self.warn('socket %@ request on %@: ERROR'.fmt(method, url));
-        self.info('  → request:', data);
-        self.info('  ← error:', error);
-        return Ember.RSVP.reject(error);
-      });
-    };
-    if (method !== 'get') {
-      return this.fetchCSRFToken().then(function () {
-        self.checkCSRF(data);
-        return run();
-      });
-    }
-    else {
-      return run();
-    }
+  _request: function(out, url, method, data) {
+    out.protocol = 'socket';
+    return this.get('sailsSocket').request(method, url, data);
   },
 
   /**
@@ -97,7 +68,7 @@ export default SailsBaseAdapter.extend({
    */
   buildURL: function (type, id, record) {
     this._listenToSocket(type);
-    return this._super.apply(this, arguments);
+    return this._super(type, id, record);
   },
 
   /**
@@ -111,7 +82,7 @@ export default SailsBaseAdapter.extend({
    * @param {Object} recordJson The json of the record (DO NOT ALTER IT!)
    * @returns {Boolean} If `false` then the record isn't subscribed for, else it is
    */
-  shouldSubscribe: function (type, recordJson) {
+  shouldSubscribe: function (/*type, recordJson*/) {
     return true;
   },
 
@@ -140,11 +111,12 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _handleSocketRecordCreated: function (store, type, message) {
-    var record = message.data;
+    var record = message.data, payload = {};
     if (!record.id && message.id) {
       record.id = message.id;
     }
-    store.pushPayload(type, record);
+    payload[type.typeKey.camelize().pluralize()] = [record];
+    store.pushPayload(type, payload);
   },
 
   /**
@@ -255,7 +227,7 @@ export default SailsBaseAdapter.extend({
           .then(function (result) {
             self.debug('subscription successful, result:', result);
           })
-          .catch(function (jwr) {
+          .catch(function (/* jwr */) {
             self.warn('error when trying to subscribe to some model(s)');
           });
       });

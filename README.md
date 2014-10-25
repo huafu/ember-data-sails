@@ -1,7 +1,23 @@
-ember-data-sails
-================
+# ember-data-sails
 
-Adapters and tools for Ember to work well with Sails.
+Adapters and tools for Ember to work well with Sails. Provides `SailsSocketService`, `SailsRESTAdapter`, `SailsSocketAdapter`, `SailsSerializer` and extends the store so that you can subscribe for records while pushing a payload.
+
+* `SailsSocketService`: injected in `adapters`, `controllers` and `routes` on `sailsSocket` property, it allow you to do Ember friendly requests using Sails socket. Example:
+
+    ```js
+    // in app/controllers/application.js
+    this.sailsSocket.request('get', '/someController/someAction', {name: 'Huafu'}})
+      .then(function(response) {
+        // do something with the response
+      });
+    ```
+    
+* `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
+* `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
+* `DS.SailsSerializer`: used by default when you use a Sails adapter, you shouldn't need to access it but it's there in case
+* `DS.Store.pushPayload([type], payload, [subscribe=false])`: as the original one from Ember Data, except it accepts an additional parameter which, when set to `true`, will tell the socket adapter to subscribe to the pushed records (see below)
+* `DS.Store.subscribe(type, ids)`: tells the sails socket adapter to subscribe to those models (see below) 
+
 
 ## Installation
 
@@ -13,7 +29,6 @@ Adapters and tools for Ember to work well with Sails.
 ## Using
 
 **You must set `sails.config.blueprints.pluralize` to `true` in your Sails API  to make the adapters works**
-
 * The `SailsSocketService` is injected on all `adapters`, `controllers` and `routes` on the `sailsSocket` property
 * To use the `SailsSocketAdapter` as the default adapter, or as a model specific adapter, extend it from `SailsSocketAdapter`:
     ```js

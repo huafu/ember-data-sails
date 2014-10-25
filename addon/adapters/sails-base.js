@@ -14,28 +14,28 @@ import WithLoggerMixin from '../mixins/with-logger';
  * @constructor
  */
 export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
-  defaultSerializer: '-sails',
+  defaultSerializer: 'sails',
   /**
    * Whether to use CSRF
    * @since 0.0.1
    * @property useCSRF
    * @type Boolean
    */
-  useCSRF:       null,
+  useCSRF:           null,
   /**
    * The csrfToken
    * @since 0.0.1
    * @property csrfToken
    * @type String
    */
-  csrfToken:     null,
+  csrfToken:         null,
   /**
    * Are we loading CSRF token?
    * @since 0.0.7
    * @property isLoadingCSRF
    * @type Boolean
    */
-  isLoadingCSRF: null,
+  isLoadingCSRF:     null,
 
   /**
    * @since 0.0.4
@@ -46,6 +46,53 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
     this._super();
     this.set('isLoadingCSRF', false);
     this.set('csrfToken', null);
+  },
+
+  /**
+   * Send a message using `_request` of extending class
+   *
+   * @since 0.0.11
+   * @method ajax
+   * @inheritDoc
+   */
+  ajax: function (url, method, data) {
+    var self = this, run, out = {};
+    method = method.toUpperCase();
+    if (data) {
+      // since some version of ED the data is on the data key
+      data = data.data;
+    }
+    else if (method !== 'GET') {
+      data = {};
+    }
+    run = function () {
+      return self._request(out, url, method, data).then(function (response) {
+        self.info('%@ %@ request on %@: SUCCESS'.fmt(out.protocol, method, url));
+        self.debug('  → request:', data);
+        self.debug('  ← response:', response);
+        if (self.isErrorObject(response)) {
+          if (response.errors) {
+            return Ember.RSVP.reject(new DS.InvalidError(self.formatError(response)));
+          }
+          return Ember.RSVP.reject(response);
+        }
+        return response;
+      }).catch(function (error) {
+        self.warn('%@ %@ request on %@: ERROR'.fmt(out.protocol, method, url));
+        self.info('  → request:', data);
+        self.info('  ← error:', error);
+        return Ember.RSVP.reject(error);
+      });
+    };
+    if (method !== 'GET') {
+      return this.fetchCSRFToken().then(function () {
+        self.checkCSRF(data);
+        return run();
+      });
+    }
+    else {
+      return run();
+    }
   },
 
   /**

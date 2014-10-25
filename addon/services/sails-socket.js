@@ -24,7 +24,7 @@ function isAlive(obj) {
  * @uses WithLoggerMixin
  * @constructor
  */
-export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
+var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
   /**
    * Holds our sails socket
    * @since 0.0.4
@@ -109,33 +109,34 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @method listenFor
    * @param {String} event The event to start/stop listening for
    * @param {Boolean} [listen=true] If `true`, it'll listen for these events, else it'll stop listening
-   * @return {Boolean} Returns `true` if the some change has been triggered, else `false`
+   * @return {Boolean} Returns `true` if the some change has been triggered or scheduled, else `false`
    */
   listenFor: function (event, listen) {
-    var cb, sockMethod, self = this;
-    listen = listen == null ? true : listen;
+    var meta, sockMethod;
+    listen = listen == null ? true : !!listen;
     if (listen && !this._listeners[event]) {
-      cb = this._listeners[event] = Ember.run.bind(this, '_handleSocketMessage', event);
+      meta = {
+        method:      Ember.run.bind(this, '_handleSocketMessage', event),
+        isListening: false
+      };
+      this._listeners[event] = meta;
       sockMethod = 'add';
     }
-    else if (!listen && (cb = this._listeners[event])) {
+    else if (!listen && (meta = this._listeners[event])) {
       sockMethod = 'remove';
     }
     if (sockMethod) {
-      this._connectedSocket(function (error, socket) {
-        if (error) {
-          self.error('error trying to %@ listener for `%@` on the socket:'.fmt(sockMethod, event), error);
+      if (this.get('isConnected')) {
+        if (listen) {
+          meta.isListening = true;
+        }else{
+          delete this._listeners[event];
         }
-        else {
-          socket[sockMethod + 'Listener'](event, cb);
-        }
-        if ((listen && error) || (!listen && !error)) {
-          delete self._listeners[event];
-        }
-        if (error) {
-          throw error;
-        }
-      });
+        this._socket[sockMethod + 'Listener'](event, meta.method);
+      }
+      else if (!listen) {
+        delete this._listeners[event];
+      }
     }
     return !!sockMethod;
   },
@@ -150,7 +151,7 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @method request
    * @param {String} method The name of the method to call
    * @param {mixed} [arg]* Any argument to give to the method
-   * @returns {*}
+   * @returns {Ember.RSVP.Promise}
    */
   request: function (method/*, arg*/) {
     var self = this,
@@ -232,20 +233,40 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
   },
 
   /**
-   * Re-bind event listeners that have been attached already
+   * Bind event listeners that have been waiting to be attached
    *
-   * @since 0.0.4
-   * @method _rebindListeners
+   * @since 0.0.11
+   * @method _bindListeners
    * @chainable
    * @private
    */
-  _rebindListeners: function () {
-    var cb;
+  _bindListeners: function () {
+    var meta;
     for (var event in this._listeners) {
-      if ((cb = this._listeners[event])) {
-        this._socket.removeListener(event, cb);
-        this._socket.addListener(event, cb);
-        this.info('re-attached event `%@` on socket'.fmt(event));
+      if (!(meta = this._listeners[event]).isListening) {
+        this._socket.addListener(event, meta.method);
+        meta.isListening = true;
+        this.info('attached event `%@` on socket'.fmt(event));
+      }
+    }
+    return this;
+  },
+
+  /**
+   * Unbind all listeners (does not remove them from the known listeners)
+   *
+   * @since 0.0.11
+   * @method _unbindListeners
+   * @chainable
+   * @private
+   */
+  _unbindListeners: function () {
+    var meta;
+    for (var event in this._listeners) {
+      if ((meta = this._listeners[event]).isListening) {
+        this._socket.removeListener(event, meta.method);
+        meta.isListening = false;
+        this.info('detached event `%@` from socket'.fmt(event));
       }
     }
     return this;
@@ -302,7 +323,7 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     if (!isAlive(this)) {
       return;
     }
-    this._rebindListeners();
+    this._bindListeners();
     this.set('isConnected', true);
     this.trigger('didConnect');
   },
@@ -320,6 +341,7 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     }
     this.set('isConnected', false);
     this.trigger('didDisconnect');
+    this._unbindListeners();
   },
 
   /**
@@ -354,3 +376,5 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     return io.socket && io.socket.socket && io.socket.socket.open;
   }
 });
+
+export default SailsSocketService;
