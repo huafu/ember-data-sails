@@ -56,6 +56,39 @@ Adapters and tools for Ember to work well with Sails.
     });
     ```
 
+* **NEW** - Since `0.0.11` you can ask the API to subscribe to some models, useful when you want for example to
+preload some data at the application start from some serialized JSON in a `<meta>` tag.
+While it's easy to push data into the store with `store.pushPayload`, then the records are not
+subscribed until you save them or get them again from Sails using the socket adapter.
+**To push a payload and automatically subscribe to the pushed records, you can give an additional
+parameter to `pushPayload` method of the store which if `true` will automatically subscribe the models
+and records it can.** This will use `subscribeMethod`, and `subscribePath`
+properties of the adapter to do a request on the API.
+    * `subscribeMethod`: `get`, `post`, ... defaults to `post`
+    * `subscribeEndpoint`: the endpoint to do the request on, defaults to `/socket/subscribe`
+    * Of course you'll need to create a basic controller in your Sails API. Here is an example:
+    
+        ```js
+        // api/controllers/SocketController.js
+        module.exports = {
+          subscribe: function (req, res, next) {
+            var ids, data = req.allParams(), model, subscribed = {};
+            for (var name in data) {
+              if (data.hasOwnProperty(name)) {
+                model = sails.models[name];
+                if (model) {
+                  ids = data[name];
+                  model.subscribe(req, ids);
+                }
+                else {
+                  sails.logger.warn('trying to subscribe to unknown model: ' + name);
+                }
+              }
+            }
+            res.json({});
+          }
+        };
+
 
 ## TODO
 

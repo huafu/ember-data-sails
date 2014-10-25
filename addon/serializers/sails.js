@@ -11,6 +11,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
   extractArray: function (store, primaryType, payload) {
     var newPayload = {};
     newPayload[primaryType.typeKey.pluralize()] = payload;
+    this._importFlags(payload, newPayload);
     return this._super(store, primaryType, newPayload);
   },
 
@@ -27,6 +28,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     }
     newPayload = {};
     newPayload[primaryType.typeKey.pluralize()] = [payload];
+    this._importFlags(payload, newPayload);
     return this._super(store, primaryType, newPayload, recordId);
   },
 
@@ -112,6 +114,20 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
       }
     });
     return hash;
+  },
+
+  /**
+   * Import Sails flags from one source to a given destination
+   *
+   * @since 0.0.11
+   * @param {Object} source
+   * @param {Object} destination
+   * @private
+   */
+  _importFlags: function (source, destination) {
+    if (source._flags) {
+      Ember.defineProperty(destination, '_sails', { value: source._flags });
+    }
   }
 });
 

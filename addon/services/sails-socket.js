@@ -156,6 +156,7 @@ export default Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     var self = this,
       args = [].slice.call(arguments, 1),
       incPending = this.incrementProperty.bind(this, 'pendingOperationCount');
+    method = method.toLowerCase();
     incPending(1);
     return new Ember.RSVP.Promise(function (resolve, reject) {
       self._connectedSocket(function (error, socket) {

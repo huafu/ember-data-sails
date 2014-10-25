@@ -20,7 +20,7 @@ export default SailsBaseAdapter.extend({
   _scheduledSubscriptions: null,
   /**
    * The method used when sending a request over the socket to update/setup subscriptions
-   * Set this or subscribePath to `null` will disable this feature
+   * Set this or subscribeEndpoint to `null` will disable this feature
    * @since 0.0.11
    * @property subscribeMethod
    * @type String
@@ -30,10 +30,10 @@ export default SailsBaseAdapter.extend({
    * The path to send a request over the socket to update/setup subscriptions
    * Set this or subscribeMethod to `null` will disable this feature
    * @since 0.0.11
-   * @property subscribePath
+   * @property subscribeEndpoint
    * @type String
    */
-  subscribePath:           '/socket/subscribe',
+  subscribeEndpoint:       '/socket/subscribe',
 
   /**
    * @since 0.0.1
@@ -91,11 +91,22 @@ export default SailsBaseAdapter.extend({
   },
 
   /**
+   * @since 0.0.11
+   * @method buildURL
+   * @inheritDoc
+   */
+  buildURL: function (type, id, record) {
+    this._listenToSocket(type);
+    return this._super.apply(this, arguments);
+  },
+
+  /**
    * Whether we should subscribe to a given model or not
    * By default it subscribe to any model, tho it's better to optimize by setting up a filter here
    * so that it does not ask the server for subscription on unneeded stuff
    *
    * @since 0.0.11
+   * @method shouldSubscribe
    * @param {subclass of DS.Model} type The type of the record
    * @param {Object} recordJson The json of the record (DO NOT ALTER IT!)
    * @returns {Boolean} If `false` then the record isn't subscribed for, else it is
@@ -187,54 +198,19 @@ export default SailsBaseAdapter.extend({
     }
   },
 
-
-
-  // TO BE REMOVED =========
-
-
   /**
-   * As well as doing the same as its super method, schedule subscription for each record's socket
-   * message that are in created payloads if we are not coming from the socket
+   * Schedule a record subscription
    *
    * @since 0.0.11
-   * @method _newPayload
-   * @private
-   */
-  _newPayload: function (store, type, record, _onRecordFound) {
-    var res, handler, self = this;
-    // override the existing handler if any with our subscription scheduler
-    handler = function (type, record) {
-      this._scheduleRecordSubscribe(type, record);
-      if (_onRecordFound) {
-        _onRecordFound(type, record);
-      }
-    };
-    // call the super with our handler
-    res = this._super(store, type, record, handler);
-    // listen to the socket evens if not done already
-    Ember.keys(res).map(function (model) {
-      self._listenToSocket(Ember.String.singularize(model));
-    });
-    Ember.run.once(this, '_subscribeScheduled');
-    return res;
-  },
-
-  /**
-   * Schedule a record subscription if we are not coming from the socket and we have a subscription
-   * method and path
-   *
-   * @since 0.0.11
+   * @method _scheduleSubscribe
    * @param {subclass of DS.Model} type
-   * @param {Object} recordJson
+   * @param {String|Number} id
    * @private
    */
-  _scheduleRecordSubscribe: function (type, recordJson) {
-    var opt = this.getProperties('subscribeMethod', 'subscribePath'), key;
-    if (this._fromSocket) {
-      // do nothing, if we are coming from the socket we must have been subscribed already
-    }
-    else if (opt.subscribeMethod && opt.subscribePath && this.shouldSubscribe(type, recordJson)) {
-      // we are not coming from the socket, schedule a subscribe
+  _scheduleSubscribe: function (type, id) {
+    var opt, key;
+    opt = this.getProperties('subscribeMethod', 'subscribeEndpoint');
+    if (opt.subscribeMethod && opt.subscribeEndpoint && id && this.shouldSubscribe(type, id)) {
       if (!this._scheduledSubscriptions) {
         this._scheduledSubscriptions = {};
       }
@@ -243,7 +219,11 @@ export default SailsBaseAdapter.extend({
       if (!this._scheduledSubscriptions[key]) {
         this._scheduledSubscriptions[key] = {};
       }
-      this._scheduledSubscriptions[key]['' + recordJson.id] = 0;
+      id = '' + id;
+      if (!this._scheduledSubscriptions[key][id]) {
+        this._scheduledSubscriptions[key][id] = 0;
+        Ember.run.debounce(this, '_subscribeScheduled', 50);
+      }
     }
   },
 
@@ -251,44 +231,34 @@ export default SailsBaseAdapter.extend({
    * Ask the API to subscribe
    *
    * @since 0.0.11
+   * @method _subscribeScheduled
    * @private
    */
   _subscribeScheduled: function () {
-    var opt = this.getProperties('subscribeMethod', 'subscribePath'), data, self = this;
-    if (this._scheduledSubscriptions && opt.subscribeMethod && opt.subscribePath) {
+    var data, payload, k, self = this,
+      opt = this.getProperties('subscribeMethod', 'subscribeEndpoint');
+    if (this._scheduledSubscriptions) {
       // grab and delete our scheduled subscriptions
       data = this._scheduledSubscriptions;
       this._scheduledSubscriptions = null;
+      payload = {};
       // the IDs are the keys so that set both the same will not duplicate them, we need to reduce them
-      for (var k in data) {
-        data[k] = Ember.keys(data[k]);
+      for (k in data) {
+        payload[k] = Object.keys(data[k]);
+        this._listenToSocket(k);
       }
-      this.notice('asking the API to subscribe to some records of %@ model(s)'.fmt(Ember.keys(data).join(', ')));
+      self.debug('asking the API to subscribe to some records of type %@'.fmt(Ember.keys(data).join(', ')));
       // ask the API to subscribe to those records
-      this.get('sailsSocket').request(
-        opt.subscribeMethod.toLowerCase(), opt.subscribePath, data
-      )
-        .then(function (result) {
-          self.notice('subscription successful, result: '.fmt(result));
-        })
-        .catch(function (jwr) {
-          self.warn('error when trying to subscribe', jwr);
-        });
+      this.fetchCSRFToken().then(function () {
+        self.checkCSRF(payload);
+        self.get('sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
+          .then(function (result) {
+            self.debug('subscription successful, result:', result);
+          })
+          .catch(function (jwr) {
+            self.warn('error when trying to subscribe to some model(s)');
+          });
+      });
     }
-  },
-
-  /**
-   * Same as `_newPayload`, but set a flag so that we know it's coming from the socket and not a push
-   * or pushPayload...
-   * @since 0.0.11
-   * @method _newPayloadFromSocket
-   * @private
-   */
-  _newPayloadFromSocket: function (store, type, record, _onRecordFound) {
-    var res, old = this._fromSocket;
-    this._fromSocket = true;
-    res = this._newPayload.apply(this, arguments);
-    this._fromSocket = old;
-    return res;
   }
 });
