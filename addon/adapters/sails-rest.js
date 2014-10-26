@@ -18,13 +18,13 @@ export default SailsBaseAdapter.extend({
    * @param {Object} out
    * @param {String} url
    * @param {String} method
-   * @param {Object} data
+   * @param {Object} options
    * @returns {Ember.RSVP.Promise}
    * @private
    */
-  _request: function(out, url, method, data) {
+  _request: function(out, url, method, options) {
     out.protocol = 'http';
-    return this._restAdapter_ajax.call(url, method, data);
+    return this._restAdapter_ajax.call(this, url, method, options);
   },
 
   /**
@@ -36,7 +36,7 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCSRFToken: function () {
-    return this.ajax('get', '/csrfToken').then(function (tokenObject) {
+    return this._restAdapter_ajax.call(this, '/csrfToken', 'get').then(function (tokenObject) {
       return tokenObject._csrf;
     });
   },

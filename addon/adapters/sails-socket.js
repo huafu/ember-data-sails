@@ -41,7 +41,7 @@ export default SailsBaseAdapter.extend({
    */
   init: function () {
     this._super();
-    this.get('sailsSocket').on('didConnect', this, 'fetchCSRFToken', true);
+    this.sailsSocket.on('didConnect', this, 'fetchCSRFToken', true);
   },
 
   /**
@@ -52,13 +52,13 @@ export default SailsBaseAdapter.extend({
    * @param {Object} out
    * @param {String} url
    * @param {String} method
-   * @param {Object} data
+   * @param {Object} options
    * @returns {Ember.RSVP.Promise}
    * @private
    */
-  _request: function(out, url, method, data) {
+  _request: function(out, url, method, options) {
     out.protocol = 'socket';
-    return this.get('sailsSocket').request(method, url, data);
+    return this.sailsSocket.request(method, url, options.data);
   },
 
   /**
@@ -95,7 +95,7 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCSRFToken: function () {
-    return this.get('sailsSocket').request('get', '/csrfToken').then(function (tokenObject) {
+    return this.sailsSocket.request('get', '/csrfToken').then(function (tokenObject) {
       return tokenObject._csrf;
     });
   },
@@ -159,7 +159,7 @@ export default SailsBaseAdapter.extend({
   _listenToSocket: function (model) {
     var store, type;
     var eventName = Ember.String.camelize(model).toLowerCase();
-    var socket = this.get('sailsSocket');
+    var socket = this.sailsSocket;
     if (socket.listenFor(eventName, true)) {
       this.notice('setting up adapter to listen for `%@` messages'.fmt(model));
       store = this.container.lookup('store:main');

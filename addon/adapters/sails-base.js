@@ -55,20 +55,20 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @method ajax
    * @inheritDoc
    */
-  ajax: function (url, method, data) {
+  ajax: function (url, method, options) {
     var self = this, run, out = {};
     method = method.toUpperCase();
-    if (data) {
-      // since some version of ED the data is on the data key
-      data = data.data;
+    if (!options) {
+      options = {};
     }
-    else if (method !== 'GET') {
-      data = {};
+    if (!options.data && method !== 'GET') {
+      // so that we can add our CSRF token
+      options.data = {};
     }
     run = function () {
-      return self._request(out, url, method, data).then(function (response) {
+      return self._request(out, url, method, options).then(function (response) {
         self.info('%@ %@ request on %@: SUCCESS'.fmt(out.protocol, method, url));
-        self.debug('  → request:', data);
+        self.debug('  → request:', options.data);
         self.debug('  ← response:', response);
         if (self.isErrorObject(response)) {
           if (response.errors) {
@@ -79,14 +79,14 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
         return response;
       }).catch(function (error) {
         self.warn('%@ %@ request on %@: ERROR'.fmt(out.protocol, method, url));
-        self.info('  → request:', data);
+        self.info('  → request:', options.data);
         self.info('  ← error:', error);
         return Ember.RSVP.reject(error);
       });
     };
     if (method !== 'GET') {
       return this.fetchCSRFToken().then(function () {
-        self.checkCSRF(data);
+        self.checkCSRF(options.data);
         return run();
       });
     }
@@ -102,11 +102,21 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    */
   ajaxError: function (jqXHR) {
     var error = this._super(jqXHR);
-    var data = Ember.$.parseJSON(jqXHR.responseText);
+    var data;
+
+    try {
+      data = Ember.$.parseJSON(jqXHR.responseText);
+    }
+    catch (err) {
+      data = jqXHR.responseText;
+    }
 
     if (data.errors) {
       this.error('error returned from Sails', data);
       return new DS.InvalidError(this.formatError(data));
+    }
+    else if (data) {
+      return new Error(data);
     }
     else {
       return error;
@@ -142,18 +152,17 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
         this.debug('fetching CSRF token...');
         return this._fetchCSRFToken()
           .then(function (token) {
+            self.set('isLoadingCSRF', false);
             self.info('got a new CSRF token:', token);
             self.set('csrfToken', token);
             Ember.run.next(self, 'trigger', 'didLoadCSRF', token);
             return token;
           })
           .catch(function (error) {
+            self.set('isLoadingCSRF', false);
             self.error('error trying to get new CSRF token:', error);
             Ember.run.next(self, 'trigger', 'didLoadCSRF', null, error);
             return error;
-          })
-          .finally(function () {
-            self.set('isLoadingCSRF', false);
           });
       }
     }
