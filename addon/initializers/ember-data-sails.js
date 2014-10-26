@@ -21,7 +21,7 @@ export function initialize(container, application) {
   });
   WithLoggerMixin.reopen(methods);
 
-  application.register('service:sails-socket', SailsSocketService);
+  container.register('service:sails-socket', SailsSocketService);
   // setup injections
   application.inject('adapter', 'sailsSocket', 'service:sails-socket');
   application.inject('route', 'sailsSocket', 'service:sails-socket');
