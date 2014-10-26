@@ -1,6 +1,6 @@
 import Ember from 'ember';
-export var LEVELS = 'debug info notice warn error'.split(' ');
 
+export var LEVELS = 'debug info notice warn error'.split(' ');
 
 var levelMap = {
   notice: 'log'

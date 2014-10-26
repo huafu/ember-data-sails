@@ -1,5 +1,5 @@
 import DS from 'ember-data';
-import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
+import SailsBaseAdapter from './sails-base';
 
 /**
  * Adapter for SailsJS HTTP REST API

@@ -1,5 +1,5 @@
-import SailsSocketServiceInitializer from 'ember-data-sails/initializers/sails-socket-service';
-import {initialize} from 'ember-data-sails/initializers/sails-socket-service';
+import SailsSocketServiceInitializer from 'ember-data-sails/initializers/ember-data-sails';
+import {initialize} from 'ember-data-sails/initializers/ember-data-sails';
 
 export var initialize;
 export default SailsSocketServiceInitializer;

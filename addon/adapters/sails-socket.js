@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
+import SailsBaseAdapter from './sails-base';
 
 /**
  * Adapter for SailsJS sockets

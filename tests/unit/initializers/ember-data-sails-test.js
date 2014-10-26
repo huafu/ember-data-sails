@@ -1,9 +1,9 @@
 import Ember from 'ember';
-import { initialize } from 'ember-data-sails/initializers/sails-socket-service';
+import { initialize } from 'ember-data-sails/initializers/ember-data-sails';
 
 var container, application;
 
-module('SailsSocketServiceInitializer', {
+module('EmberDataSailsInitializer', {
   setup: function () {
     Ember.run(function () {
       container = new Ember.Container();
