@@ -21,7 +21,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
 
 ## Installation
 
-* `npm install --save-dev ember-sails-adapter`
+* `npm install --save-dev ember-data-sails`
 * If you plan on using sockets:
   * `ember generate ember-data-sails`
   * add `app.import('vendor/js/sails.io.js');` to your `Brocfile.js`
