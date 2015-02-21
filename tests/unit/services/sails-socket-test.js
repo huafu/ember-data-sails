@@ -18,26 +18,26 @@ moduleFor('service:sails-socket', 'SailsSocketService', {
 });
 
 
-test('it waits for object to be ready', function () {
+test('it waits for object to be ready', function (assert) {
   var service = this.subject();
-  expect(3);
-  strictEqual(service.get('isInitialized'), false, 'the service should not be initialized at start');
+  assert.expect(3);
+  assert.strictEqual(service.get('isInitialized'), false, 'the service should not be initialized at start');
   ioMock.mockConnect(10);
   service.on('didInitialize', function () {
-    ok(true, 'the didInitialize event should have been triggered');
+    assert.ok(true, 'the didInitialize event should have been triggered');
   });
   return new Ember.RSVP.Promise(function (resolve, reject) {
     Ember.run.later(function () {
-      strictEqual(service.get('isInitialized'), true, 'the service should have been initialized');
+      assert.strictEqual(service.get('isInitialized'), true, 'the service should have been initialized');
       resolve();
     }, 100);
   });
 });
 
 
-test('it performs request once connected only', function () {
+test('it performs request once connected only', function (assert) {
   var calls = [], service = this.subject();
-  expect(2);
+  assert.expect(2);
   ioMock.mockRequest('get', '/toto', null, {name: 'toto'}, null, function () {
     calls.push('request');
   });
@@ -49,12 +49,12 @@ test('it performs request once connected only', function () {
   });
   service.request('get', '/toto', null).then(function (response) {
     calls.push('response');
-    deepEqual(response, {name: 'toto'}, 'the response should be correct');
+    assert.deepEqual(response, {name: 'toto'}, 'the response should be correct');
   });
   ioMock.mockConnect(10);
   return new Ember.RSVP.Promise(function (resolve, reject) {
     Ember.run.later(function () {
-      deepEqual(
+      assert.deepEqual(
         calls,
         ['didInitialize', 'didConnect', 'request', 'response'],
         'the calls should have been made in correct order');

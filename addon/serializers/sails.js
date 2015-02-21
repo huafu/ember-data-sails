@@ -2,6 +2,10 @@ import Ember from 'ember';
 import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
 
+
+var EmberString = Ember.String;
+var fmt = EmberString.fmt;
+
 var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
   /**
    * @since 0.0.11
@@ -47,7 +51,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     var json;
     if (Ember.keys(data).length > 0) {
       this.error(
-        'trying to serialize multiple records in one hash for type %@'.fmt(type.typeKey),
+        fmt('trying to serialize multiple records in one hash for type %@', type.typeKey),
         data
       );
       throw new Error('Sails does not accept putting multiple records in one hash');
@@ -86,7 +90,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
       if ((data = hash[key])) {
         if (rel.kind === 'belongsTo') {
           if (Ember.typeOf(hash[key]) === 'object') {
-            self.debug('found 1 embedded %@ record:'.fmt(rel.type.typeKey), hash[key]);
+            self.debug(fmt('found 1 embedded %@ record:', rel.type.typeKey), hash[key]);
             delete hash[key];
             serializer = store.serializerFor(rel.type.typeKey);
             self.store.push(rel.type, serializer.normalize(rel.type, data, null));
@@ -97,7 +101,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
           serializer = store.serializerFor(rel.type.typeKey);
           hash[key] = data.map(function (item) {
             if (Ember.typeOf(item) === 'object') {
-              self.debug('found 1 embedded %@ record:'.fmt(rel.type.typeKey), item);
+              self.debug(fmt('found 1 embedded %@ record:', rel.type.typeKey), item);
               self.store.push(rel.type, serializer.normalize(rel.type, item, null));
               return item.id;
             }
@@ -105,7 +109,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
           });
         }
         else {
-          self.warn('unknown relationship kind %@:'.fmt(rel.kind), rel);
+          self.warn(fmt('unknown relationship kind %@:', rel.kind), rel);
           throw new DS.Error('Unknown relationship kind ' + rel.kind);
         }
       }

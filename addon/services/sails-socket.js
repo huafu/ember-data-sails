@@ -2,6 +2,13 @@
 import Ember from 'ember';
 import WithLoggerMixin from '../mixins/with-logger';
 
+var computed = Ember.computed;
+var run = Ember.run;
+var bind = run.bind;
+var next = run.next;
+var EmberString = Ember.String;
+var fmt = EmberString.fmt;
+
 /**
  * Shortcut to know if an object is alive or not
  *
@@ -32,7 +39,8 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @type io.Socket
    * @private
    */
-  _socket:               null,
+  _socket: null,
+
   /**
    * Holds the events we are listening on the socket for later re-binding
    * @since 0.0.4
@@ -40,21 +48,24 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @type Object<Object>
    * @private
    */
-  _listeners:            null,
+  _listeners: null,
+
   /**
    * Whether the socket core object is initialized or not
    * @since 0.0.4
    * @property isInitialized
    * @type Boolean
    */
-  isInitialized:         null,
+  isInitialized: null,
+
   /**
    * Whether the socket is connected or not
    * @since 0.0.4
    * @property isConnected
    * @type Boolean
    */
-  isConnected:           null,
+  isConnected: null,
+
   /**
    * The number of currently pending operations
    * @since 0.0.4
@@ -62,15 +73,16 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @type Number
    */
   pendingOperationCount: null,
+
   /**
    * Whether the service is busy or not
    * @since 0.0.4
    * @property isBusy
    * @type Boolean
    */
-  isBusy:                function () {
+  isBusy: computed('pendingOperationCount', 'isInitialized', function () {
     return !this.get('isInitialized') || this.get('pendingOperationCount') > 0;
-  }.property('pendingOperationCount', 'isInitialized').readOnly(),
+  }),
 
 
   /**
@@ -116,7 +128,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     listen = listen == null ? true : !!listen;
     if (listen && !this._listeners[event]) {
       meta = {
-        method:      Ember.run.bind(this, '_handleSocketMessage', event),
+        method:      bind(this, '_handleSocketMessage', event),
         isListening: false
       };
       this._listeners[event] = meta;
@@ -129,7 +141,8 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
       if (this.get('isConnected')) {
         if (listen) {
           meta.isListening = true;
-        }else{
+        }
+        else {
           delete this._listeners[event];
         }
         this._socket[sockMethod + 'Listener'](event, meta.method);
@@ -156,7 +169,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
   request: function (method/*, arg*/) {
     var self = this,
       args = [].slice.call(arguments, 1),
-      incPending = this.incrementProperty.bind(this, 'pendingOperationCount');
+      incPending = bind(this, 'incrementProperty', 'pendingOperationCount');
     method = method.toLowerCase();
     incPending(1);
     return new Ember.RSVP.Promise(function (resolve, reject) {
@@ -178,7 +191,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
           reject(error ? error : new Ember.Error('Sails socket service destroyed'));
         }
       });
-    }, 'getting the connected Sails socket for `%@` request on %@'.fmt(method, args[0]));
+    }, fmt('getting the connected Sails socket for `%@` request on %@', method, args[0]));
   },
 
   /**
@@ -187,7 +200,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @inheritDoc
    */
   trigger: function (event/*, arg*/) {
-    this.debug('triggering event `%@`'.fmt(event));
+    this.debug(fmt('triggering event `%@`', event));
     return this._super.apply(this, arguments);
   },
 
@@ -202,17 +215,17 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
   _connectedSocket: function (callback) {
     if (!isAlive(this)) {
       this.wran('cannot get socket, service destroyed');
-      Ember.run.next(this, callback, new Ember.Error('Sails socket service destroyed'));
+      next(this, callback, new Ember.Error('Sails socket service destroyed'));
     }
     else if (this.get('isConnected')) {
       this.debug('socket connected, giving it in next run loop');
-      Ember.run.next(this, callback, null, this._socket);
+      next(this, callback, null, this._socket);
     }
     else {
       this.info('socket not connected, listening for connect event before giving it');
-      this.one('didConnect', function () {
-        Ember.run.next(this, callback, null, this._socket);
-      }.bind(this));
+      this.one('didConnect', bind(this, function () {
+        next(this, callback, null, this._socket);
+      }));
       if (this.get('isInitialized')) {
         this.info('looks like we are initialized but not connected, reconnecting socket');
         this._reconnect();
@@ -246,7 +259,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
       if (!(meta = this._listeners[event]).isListening) {
         this._socket.addListener(event, meta.method);
         meta.isListening = true;
-        this.info('attached event `%@` on socket'.fmt(event));
+        this.info(fmt('attached event `%@` on socket', event));
       }
     }
     return this;
@@ -266,7 +279,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
       if ((meta = this._listeners[event]).isListening) {
         this._socket.removeListener(event, meta.method);
         meta.isListening = false;
-        this.info('detached event `%@` from socket'.fmt(event));
+        this.info(fmt('detached event `%@` from socket', event));
       }
     }
     return this;
@@ -306,10 +319,10 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     this._socket = io.socket;
     this.set('isInitialized', true);
     this.trigger('didInitialize');
-    this._socket.on('connect', Ember.run.bind(this, '_handleSocketConnect'));
-    this._socket.on('disconnect', Ember.run.bind(this, '_handleSocketDisconnect'));
+    this._socket.on('connect', bind(this, '_handleSocketConnect'));
+    this._socket.on('disconnect', bind(this, '_handleSocketDisconnect'));
     // after initialization the socket is connected due to the hack we have to do
-    Ember.run.next(this, '_handleSocketConnect');
+    next(this, '_handleSocketConnect');
   },
 
   /**
@@ -357,7 +370,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
       return;
     }
     if (this._isJsObjectReady()) {
-      Ember.run.next(this, '_handleSocketReady');
+      next(this, '_handleSocketReady');
     }
     else {
       Ember.run.later(this, '_waitJsObject', 10);

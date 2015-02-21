@@ -8,7 +8,7 @@ var levelMap = {
 var methods = {};
 
 LEVELS.forEach(function (level) {
-  methods[level] = Ember.Logger[levelMap[level] || level].bind(Ember.Logger, '[ed-sails]');
+  methods[level] = Ember.run.bind(Ember.Logger, levelMap[level] || level, '[ed-sails]');
 });
 
 /**

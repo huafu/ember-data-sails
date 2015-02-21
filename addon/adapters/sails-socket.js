@@ -1,6 +1,12 @@
 import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
 
+var EmberString = Ember.String;
+var fmt = EmberString.fmt;
+var camelize = EmberString.camelize;
+var run = Ember.run;
+var bind = run.bind;
+
 /**
  * Adapter for SailsJS sockets
  *
@@ -158,15 +164,15 @@ export default SailsBaseAdapter.extend({
    */
   _listenToSocket: function (model) {
     var store, type;
-    var eventName = Ember.String.camelize(model).toLowerCase();
+    var eventName = camelize(model).toLowerCase();
     var socket = this.sailsSocket;
     if (socket.listenFor(eventName, true)) {
-      this.notice('setting up adapter to listen for `%@` messages'.fmt(model));
+      this.notice(fmt('setting up adapter to listen for `%@` messages', model));
       store = this.container.lookup('store:main');
       type = store.modelFor(model);
-      socket.on(eventName + '.created', Ember.run.bind(this, '_handleSocketRecordCreated', store, type));
-      socket.on(eventName + '.updated', Ember.run.bind(this, '_handleSocketRecordUpdated', store, type));
-      socket.on(eventName + '.destroyed', Ember.run.bind(this, '_handleSocketRecordDeleted', store, type));
+      socket.on(eventName + '.created', bind(this, '_handleSocketRecordCreated', store, type));
+      socket.on(eventName + '.updated', bind(this, '_handleSocketRecordUpdated', store, type));
+      socket.on(eventName + '.destroyed', bind(this, '_handleSocketRecordDeleted', store, type));
     }
   },
 
@@ -219,7 +225,7 @@ export default SailsBaseAdapter.extend({
         payload[k] = Object.keys(data[k]);
         this._listenToSocket(k);
       }
-      self.debug('asking the API to subscribe to some records of type %@'.fmt(Ember.keys(data).join(', ')));
+      self.debug(fmt('asking the API to subscribe to some records of type %@', Ember.keys(data).join(', ')));
       // ask the API to subscribe to those records
       this.fetchCSRFToken().then(function () {
         self.checkCSRF(payload);

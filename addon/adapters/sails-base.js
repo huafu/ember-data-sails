@@ -3,6 +3,9 @@ import Ember from 'ember';
 import WithLoggerMixin from '../mixins/with-logger';
 
 
+var EmberString = Ember.String;
+var fmt = EmberString.fmt;
+
 /**
  * Base adapter for SailsJS adapters
  *
@@ -67,7 +70,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
     }
     run = function () {
       return self._request(out, url, method, options).then(function (response) {
-        self.info('%@ %@ request on %@: SUCCESS'.fmt(out.protocol, method, url));
+        self.info(fmt('%@ %@ request on %@: SUCCESS', out.protocol, method, url));
         self.debug('  → request:', options.data);
         self.debug('  ← response:', response);
         if (self.isErrorObject(response)) {
@@ -78,7 +81,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
         }
         return response;
       }).catch(function (error) {
-        self.warn('%@ %@ request on %@: ERROR'.fmt(out.protocol, method, url));
+        self.warn(fmt('%@ %@ request on %@: ERROR', out.protocol, method, url));
         self.info('  → request:', options.data);
         self.info('  ← error:', error);
         return Ember.RSVP.reject(error);

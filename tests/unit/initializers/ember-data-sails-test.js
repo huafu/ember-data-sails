@@ -1,4 +1,5 @@
 import Ember from 'ember';
+import { module, test } from 'qunit';
 import { initialize } from 'ember-data-sails/initializers/ember-data-sails';
 
 var container, application;
@@ -14,18 +15,18 @@ module('EmberDataSailsInitializer', {
 });
 
 
-test('it setups injections of the socket service', function () {
+test('it setups injections of the socket service', function (assert) {
   initialize(container, application);
   var cont = application.__container__;
-  deepEqual(cont.typeInjections.get('controller').pop(), {
+  assert.deepEqual(cont.typeInjections.controller.pop(), {
     fullName: 'service:sails-socket',
     property: 'sailsSocket'
   }, 'the service should have injection setup on all controllers');
-  deepEqual(cont.typeInjections.get('adapter').pop(), {
+  assert.deepEqual(cont.typeInjections.adapter.pop(), {
     fullName: 'service:sails-socket',
     property: 'sailsSocket'
   }, 'the service should have injection setup on all adapters');
-  deepEqual(cont.typeInjections.get('route').pop(), {
+  assert.deepEqual(cont.typeInjections.route.pop(), {
     fullName: 'service:sails-socket',
     property: 'sailsSocket'
   }, 'the service should have injection setup on all routes');

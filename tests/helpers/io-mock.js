@@ -1,4 +1,8 @@
 /* global clearTimeout */
+import Ember from 'ember';
+
+var bind = Ember.run.bind;
+var fmt = Ember.String.fmt;
 
 var socket, io;
 function requestMethod(method) {
@@ -47,7 +51,7 @@ socket = {
       this.disconnecting = false;
       this.connecting = true;
       this.reconnecting = asReconnect ? true : false;
-      this._connectingTimeout = setTimeout(function () {
+      this._connectingTimeout = setTimeout(bind(this, function () {
         this._connectingTimeout = null;
         this.reconnecting = false;
         this.connecting = false;
@@ -59,7 +63,7 @@ socket = {
           io.mockProcessQueue();
           io.mockTrigger('connect');
         }
-      }.bind(this), delay);
+      }), delay);
     },
     reconnect:  function (delay, fail) {
       this.connect(delay, fail, true);
@@ -81,14 +85,14 @@ socket = {
       this.disconnecting = true;
       this.reconnecting = false;
       this.connecting = false;
-      this._disconnectingTimeout = setTimeout(function () {
+      this._disconnectingTimeout = setTimeout(bind(this, function () {
         this._disconnectingTimeout = null;
         this.disconnecting = false;
         if (!fail) {
           this.connected = this.open = false;
           io.mockTrigger('disconnect');
         }
-      }.bind(this), delay);
+      }), delay);
     }
   },
   addListener:    function (eventName, method, thisArg) {
@@ -132,11 +136,11 @@ io = {
     if ((item = io.socket.requestQueue.shift())) {
       res = io.mockPopResponse(item.method, item.url);
       if (!res) {
-        throw new ReferenceError('unable to find a mock for %@ %@'.fmt(item.method, item.url));
+        throw new ReferenceError(fmt('unable to find a mock for %@ %@', item.method, item.url));
       }
       res.onStart(res);
       setTimeout(function () {
-        setTimeout(io.mockProcessQueue.bind(io), 1);
+        setTimeout(bind(io, 'mockProcessQueue'), 1);
         if (res.error) {
           item.cb(res.response, res.error === true ? {statusCode: 404} : res.error);
         }
