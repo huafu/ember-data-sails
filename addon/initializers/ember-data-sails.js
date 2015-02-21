@@ -11,17 +11,20 @@ export function initialize(container, application) {
   var methods = {};
   var minLevel = application.SAILS_LOG_LEVEL;
   var shouldLog = false;
-  LEVELS.forEach(function(level){
-    if(level === minLevel){
+  LEVELS.forEach(function (level) {
+    if (level === minLevel) {
       shouldLog = true;
     }
-    if(!shouldLog){
+    if (!shouldLog) {
       methods[level] = Ember.K;
     }
   });
   WithLoggerMixin.reopen(methods);
 
-  container.register('service:sails-socket', SailsSocketService);
+  container.register('service:sails-socket', SailsSocketService.extend({
+    socketUrl: Ember.get(application, 'emberDataSails.socketUrl')
+  }));
+
   // setup injections
   application.inject('adapter', 'sailsSocket', 'service:sails-socket');
   application.inject('route', 'sailsSocket', 'service:sails-socket');
@@ -29,7 +32,7 @@ export function initialize(container, application) {
 }
 
 var EmberDataSailsInitializer = {
-  name: 'ember-data-sails',
+  name:   'ember-data-sails',
   before: 'store',
 
   initialize: initialize

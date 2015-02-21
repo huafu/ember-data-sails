@@ -4,8 +4,10 @@ import SailsBaseAdapter from './sails-base';
 var EmberString = Ember.String;
 var fmt = EmberString.fmt;
 var camelize = EmberString.camelize;
+var pluralize = EmberString.pluralize;
 var run = Ember.run;
 var bind = run.bind;
+var debounce = run.debounce;
 
 /**
  * Adapter for SailsJS sockets
@@ -121,7 +123,7 @@ export default SailsBaseAdapter.extend({
     if (!record.id && message.id) {
       record.id = message.id;
     }
-    payload[type.typeKey.camelize().pluralize()] = [record];
+    payload[pluralize(camelize(type.typeKey))] = [record];
     store.pushPayload(type, payload);
   },
 
@@ -193,14 +195,14 @@ export default SailsBaseAdapter.extend({
         this._scheduledSubscriptions = {};
       }
       // use an object and keys so that we don't have duplicate IDs
-      key = Ember.String.camelize(type.typeKey);
+      key = camelize(type.typeKey);
       if (!this._scheduledSubscriptions[key]) {
         this._scheduledSubscriptions[key] = {};
       }
       id = '' + id;
       if (!this._scheduledSubscriptions[key][id]) {
         this._scheduledSubscriptions[key][id] = 0;
-        Ember.run.debounce(this, '_subscribeScheduled', 50);
+        debounce(this, '_subscribeScheduled', 50);
       }
     }
   },

@@ -5,6 +5,7 @@ import WithLogger from '../mixins/with-logger';
 
 var EmberString = Ember.String;
 var fmt = EmberString.fmt;
+var pluralize = EmberString.pluralize;
 
 var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
   /**
@@ -14,7 +15,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    */
   extractArray: function (store, primaryType, payload) {
     var newPayload = {};
-    newPayload[primaryType.typeKey.pluralize()] = payload;
+    newPayload[pluralize(primaryType.typeKey)] = payload;
     return this._super(store, primaryType, newPayload);
   },
 
@@ -25,11 +26,11 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    */
   extractSingle: function (store, primaryType, payload, recordId) {
     var newPayload;
-    if(payload === null){
+    if (payload === null) {
       return this._super.apply(this, arguments);
     }
     newPayload = {};
-    newPayload[primaryType.typeKey.pluralize()] = [payload];
+    newPayload[pluralize(primaryType.typeKey)] = [payload];
     return this._super(store, primaryType, newPayload, recordId);
   },
 

@@ -12,6 +12,8 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
       });
     ```
     
+    It'll connect to the same port and host of the browser window, but you can change this using the `emberDataSails.socketUrl` configuration property in `ENV.APP`, `config/environment.js` file.
+    
 * `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsSerializer`: used by default when you use a Sails adapter, you shouldn't need to access it but it's there in case
@@ -115,4 +117,4 @@ properties of the adapter to do a request on the API.
 
 _While this was first inspired from [ember-data-sails-adapter](https://github.com/bmac/ember-data-sails-adapter), it has now been fully re-written, with a totally different approach, and, as of the day this was written, with more features._
 
-* ![Huafu Gandon](https://s.gravatar.com/avatar/950590a0d4bc96f4a239cac955112eeb?s=24) [Huafu Gandon](https://github.com/huafu)
+* <img src="https://s.gravatar.com/avatar/950590a0d4bc96f4a239cac955112eeb?s=24" valign="absmiddle"> [Huafu Gandon](http://huafu.github.com)

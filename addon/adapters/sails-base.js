@@ -5,6 +5,8 @@ import WithLoggerMixin from '../mixins/with-logger';
 
 var EmberString = Ember.String;
 var fmt = EmberString.fmt;
+var pluralize = EmberString.pluralize;
+var camelize = EmberString.camelize;
 
 /**
  * Base adapter for SailsJS adapters
@@ -195,7 +197,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @inheritDoc
    */
   pathForType: function (type) {
-    return Ember.String.camelize(type).pluralize();
+    return pluralize(camelize(type));
   },
 
   /**

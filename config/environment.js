@@ -1,4 +1,4 @@
-'use strict';
+/* globals module */
 
 module.exports = function (environment, appConfig) {
   var level = environment === 'production' ? 'error' : 'warn';
