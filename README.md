@@ -12,7 +12,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
       });
     ```
     
-    It'll connect to the same port and host of the browser window, but you can change this using the `emberDataSails.socketUrl` configuration property in `ENV.APP`, `config/environment.js` file.
+    It'll use by default the `sails.io.js` located at `<hostname>:1337/js/dependencies/sails.io.js`, but you can change this using the `emberDataSails.socketScriptUrl` configuration property in `ENV.APP`, `config/environment.js` file.
     
 * `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
@@ -39,10 +39,6 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     
     export default SailsSocketAdapter.extend({
       /**
-       * The namespace of your API
-       */
-      namespace:            'api/v1',
-      /**
        * Whether to use CSRF tokens or not
        */
       useCSRF:              true,
@@ -58,6 +54,10 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     import SailsRESTAdapter from 'ember-data-sails/adapters/sails-rest';
     
     export default SailsRESTAdapter.extend({
+      /**
+       * The host of your API
+       */
+      host:                 'localhost:1337',
       /**
        * The namespace of your API
        */

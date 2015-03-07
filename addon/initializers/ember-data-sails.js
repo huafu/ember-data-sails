@@ -7,10 +7,14 @@ import SailsSocketService from '../services/sails-socket';
 
 DS.Store.reopen(StoreMixin);
 
+var get = Ember.get;
+var merge = Ember.merge;
+
 export function initialize(container, application) {
-  var methods = {};
-  var minLevel = application.SAILS_LOG_LEVEL;
-  var shouldLog = false;
+  var methods, minLevel, shouldLog, socketScriptOptions;
+  methods = {};
+  minLevel = application.SAILS_LOG_LEVEL;
+  shouldLog = false;
   LEVELS.forEach(function (level) {
     if (level === minLevel) {
       shouldLog = true;
@@ -21,11 +25,20 @@ export function initialize(container, application) {
   });
   WithLoggerMixin.reopen(methods);
 
-  container.register('service:sails-socket', SailsSocketService.extend({
-    socketUrl: Ember.get(application, 'emberDataSails.socketUrl')
-  }));
+  // find out the socket host and path
+  socketScriptOptions = merge({
+    protocol:   location.protocol === 'file:' ? 'http:' : location.protocol,
+    hostname:   location.hostname,
+    port:       location.port,
+    scriptPath: '/js/dependencies/sails.io.js',
+    apiPath:    ''
+  }, get(application, 'emberDataSails.socketScript'));
+
+  container.register('sails-socket:options', socketScriptOptions, {instantiate: false});
+  container.register('service:sails-socket', SailsSocketService);
 
   // setup injections
+  application.inject('service:sails-socket', 'socketOptions', 'sails-socket:options');
   application.inject('adapter', 'sailsSocket', 'service:sails-socket');
   application.inject('route', 'sailsSocket', 'service:sails-socket');
   application.inject('controller', 'sailsSocket', 'service:sails-socket');

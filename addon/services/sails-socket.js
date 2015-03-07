@@ -10,10 +10,6 @@ var later = run.later;
 var EmberString = Ember.String;
 var fmt = EmberString.fmt;
 
-window.io = io || {};
-io.sails = io.sails || {};
-io.sails.autoConnect = false;
-
 /**
  * Shortcut to know if an object is alive or not
  *
@@ -54,14 +50,6 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @private
    */
   _listeners: null,
-
-  /**
-   * The URL to the sails socket
-   * @since 0.0.13
-   * @property socketUrl
-   * @type String
-   */
-  socketUrl: null,
 
   /**
    * Whether the socket core object is initialized or not
@@ -112,7 +100,6 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
       isInitialized:         false,
       isConnected:           false
     });
-    this._waitJsObject();
   },
 
   /**
@@ -227,7 +214,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    */
   _connectedSocket: function (callback) {
     if (!isAlive(this)) {
-      this.wran('cannot get socket, service destroyed');
+      this.warn('cannot get socket, service destroyed');
       next(this, callback, new Ember.Error('Sails socket service destroyed'));
     }
     else if (this.get('isConnected')) {
@@ -236,12 +223,13 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     }
     else {
       this.info('socket not connected, listening for connect event before giving it');
-      this.one('didConnect', bind(this, function () {
-        next(this, callback, null, this._sailsSocket);
-      }));
+      this.one('didConnect', bind(this, callback, null, this._sailsSocket));
       if (this.get('isInitialized')) {
         this.info('looks like we are initialized but not connected, reconnecting socket');
         this._reconnect();
+      }
+      else {
+        this._load();
       }
     }
   },
@@ -331,10 +319,10 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     this.info('socket core object ready');
     this.set('isInitialized', true);
     this.trigger('didInitialize');
-    // initialize the connection
-    this._sailsSocket = io.sails.connect(this.get('socketUrl'));
+    this._sailsSocket = io.socket._raw;
     this._sailsSocket.on('connect', bind(this, '_handleSocketConnect'));
     this._sailsSocket.on('disconnect', bind(this, '_handleSocketDisconnect'));
+    this._handleSocketConnect();
   },
 
   /**
@@ -398,7 +386,33 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @private
    */
   _isJsObjectReady: function () {
-    return window.io && io.Socket;
+    return io.socket && io.socket.socket && io.socket._raw.connected;
+  },
+
+
+  /**
+   * Loads the sails.io.js script and wait for the connection and io object to be ready
+   *
+   * @since 0.0.13
+   * @method _load
+   * @private
+   */
+  _load: function () {
+    var scriptUrl, _this;
+    scriptUrl = this.get('socketScriptUrl');
+    _this = this;
+    if (scriptUrl) {
+      this.debug('loading sails.io javascript dependency...');
+      Ember.$.getScript(scriptUrl)
+        .fail(function (error) {
+          _this.error('unable to load the sails.io javascript file for socket connection.');
+          Ember.error(new ReferenceError('Unable to load the sails.io script for socket connection: ' + error));
+        })
+        .done(bind(this, '_waitJsObject'));
+    }
+    else {
+      this.error('no script URL found to load the sails.io javascript dependency');
+    }
   }
 });
 
