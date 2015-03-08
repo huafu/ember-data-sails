@@ -52,6 +52,17 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
   _listeners: null,
 
   /**
+   * The URL to the sails socket
+   * @since 0.0.13
+   * @property socketUrl
+   * @type String
+   */
+  socketUrl: computed(function () {
+    var script = document.getElementById('eds-sails-io-script');
+    return script.src.replace(/^([^:]+:\/\/[^\/]+).*$/g, '$1');
+  }),
+
+  /**
    * Whether the socket core object is initialized or not
    * @since 0.0.4
    * @property isInitialized
@@ -223,7 +234,9 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     }
     else {
       this.info('socket not connected, listening for connect event before giving it');
-      this.one('didConnect', bind(this, callback, null, this._sailsSocket));
+      this.one('didConnect', bind(this, function () {
+        callback.call(this, null, this._sailsSocket);
+      }));
       if (this.get('isInitialized')) {
         this.info('looks like we are initialized but not connected, reconnecting socket');
         this._reconnect();
@@ -313,16 +326,27 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @private
    */
   _handleSocketReady: function () {
+    var waitObject;
     if (!isAlive(this)) {
       return;
     }
     this.info('socket core object ready');
     this.set('isInitialized', true);
     this.trigger('didInitialize');
-    this._sailsSocket = io.socket._raw;
-    this._sailsSocket.on('connect', bind(this, '_handleSocketConnect'));
-    this._sailsSocket.on('disconnect', bind(this, '_handleSocketDisconnect'));
-    this._handleSocketConnect();
+    this._sailsSocket = io.sails.connect(this.get('socketUrl'));
+    waitObject = bind(this, function () {
+      if (this._sailsSocket._raw) {
+        this._sailsSocket._raw.addEventListener('connect', bind(this, '_handleSocketConnect'));
+        this._sailsSocket._raw.addEventListener('disconnect', bind(this, '_handleSocketDisconnect'));
+        if (this._sailsSocket._raw.connected) {
+          next(this, '_handleSocketConnect');
+        }
+      }
+      else {
+        later(waitObject, 10);
+      }
+    });
+    waitObject();
   },
 
   /**
@@ -357,38 +381,6 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     this._unbindListeners();
   },
 
-  /**
-   * Wait until the `io.socket.socket.open` is `true`, which is a hack to be sure the `io.socket`
-   * object is ready to be used and ready to attach events on.
-   *
-   * @since 0.0.4
-   * @method _waitJsObject
-   * @private
-   */
-  _waitJsObject: function () {
-    if (!isAlive(this)) {
-      return;
-    }
-    if (this._isJsObjectReady()) {
-      next(this, '_handleSocketReady');
-    }
-    else {
-      later(this, '_waitJsObject', 10);
-    }
-  },
-
-  /**
-   * Finds whether the `io.socket` object is ready and connected (hack).
-   *
-   * @since 0.0.4
-   * @method _waitJsObject
-   * @returns {Boolean}
-   * @private
-   */
-  _isJsObjectReady: function () {
-    return io.socket && io.socket.socket && io.socket._raw.connected;
-  },
-
 
   /**
    * Loads the sails.io.js script and wait for the connection and io object to be ready
@@ -398,20 +390,13 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @private
    */
   _load: function () {
-    var scriptUrl, _this;
-    scriptUrl = this.get('socketScriptUrl');
-    _this = this;
-    if (scriptUrl) {
-      this.debug('loading sails.io javascript dependency...');
-      Ember.$.getScript(scriptUrl)
-        .fail(function (error) {
-          _this.error('unable to load the sails.io javascript file for socket connection.');
-          Ember.error(new ReferenceError('Unable to load the sails.io script for socket connection: ' + error));
-        })
-        .done(bind(this, '_waitJsObject'));
-    }
-    else {
-      this.error('no script URL found to load the sails.io javascript dependency');
+    if (!this._loaded) {
+      if (window.io && io.sails && io.sails.emberDataSailsReady) {
+        next(this, '_handleSocketReady');
+      }
+      else {
+        later(this, '_load', 10);
+      }
     }
   }
 });

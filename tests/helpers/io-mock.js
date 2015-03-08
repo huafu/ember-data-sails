@@ -7,7 +7,7 @@ var fmt = Ember.String.fmt;
 var socket, io;
 function requestMethod(method) {
   return function (url, data, callback) {
-    io.socket.requestQueue.push({
+    io.sails.requestQueue.push({
       cb:      callback,
       method:  method.toLowerCase(),
       url:     url,
@@ -20,13 +20,13 @@ function requestMethod(method) {
 socket = {
   requestQueue: [],
 
-  get:            requestMethod('get'),
-  post:           requestMethod('post'),
-  put:            requestMethod('put'),
-  delete:         requestMethod('delete'),
+  get:    requestMethod('get'),
+  post:   requestMethod('post'),
+  put:    requestMethod('put'),
+  delete: requestMethod('delete'),
 
   // mocked properties and methods
-  socket:         {
+  _raw:   {
     _connectingTimeout:    null,
     _disconnectingTimeout: null,
     open:                  false,
@@ -35,7 +35,11 @@ socket = {
     reconnecting:          false,
     disconnecting:         false,
 
-    connect:    function (delay, fail, asReconnect) {
+    connect: function (url) {
+      this._connect();
+    },
+
+    _connect: function (delay, fail, asReconnect) {
       delay = delay || 50;
       if (this.reconnecting || this.connecting) {
         return;
@@ -65,9 +69,11 @@ socket = {
         }
       }), delay);
     },
-    reconnect:  function (delay, fail) {
-      this.connect(delay, fail, true);
+
+    reconnect: function (delay, fail) {
+      this._connect(delay, fail, true);
     },
+
     disconnect: function (delay, fail) {
       delay = delay || 50;
       if (this.disconnecting) {
@@ -93,28 +99,32 @@ socket = {
           io.mockTrigger('disconnect');
         }
       }), delay);
+    },
+
+    addEventListener: function (eventName, method, thisArg) {
+      var listeners = io.mockMeta.events[eventName];
+      if (!listeners) {
+        listeners = io.mockMeta.events[eventName] = [];
+      }
+      listeners.push({target: thisArg || null, method: method});
+    },
+
+    removeEventListener: function (eventName, method, thisArg) {
+      var listeners = io.mockMeta.events[eventName];
+      if (!listeners) {
+        return;
+      }
+      io.mockMeta.events[eventName] = listeners.filter(function (listener) {
+        return !(listener.target === thisArg && listener.method === method);
+      });
     }
-  },
-  addListener:    function (eventName, method, thisArg) {
-    var listeners = io.mockMeta.events[eventName];
-    if (!listeners) {
-      listeners = io.mockMeta.events[eventName] = [];
-    }
-    listeners.push({target: thisArg || null, method: method});
-  },
-  removeListener: function (eventName, method, thisArg) {
-    var listeners = io.mockMeta.events[eventName];
-    if (!listeners) {
-      return;
-    }
-    io.mockMeta.events[eventName] = listeners.filter(function (listener) {
-      return !(listener.target === thisArg && listener.method === method);
-    });
   }
 };
+
 io = {
-  _oldIo:           null,
-  mockSetup:        function (connectDelay, fail) {
+  _oldIo: null,
+
+  mockSetup: function (connectDelay, fail) {
     this._oldIo = window.io;
     window.io = io;
     io.mockReset();
@@ -122,18 +132,21 @@ io = {
       this.mockConnect(connectDelay, fail);
     }
   },
-  mockConnect:      function (delay, fail) {
-    socket.socket.connect(delay, fail);
+
+  mockConnect: function (delay, fail) {
+    socket._raw._connect(delay, fail);
   },
-  mockTeardown:     function () {
+
+  mockTeardown: function () {
     window.io = this._oldIo;
   },
+
   mockProcessQueue: function () {
     var item, res;
-    if (!socket.socket.open) {
+    if (!socket._raw.open) {
       return;
     }
-    if ((item = io.socket.requestQueue.shift())) {
+    if ((item = io.sails.requestQueue.shift())) {
       res = io.mockPopResponse(item.method, item.url);
       if (!res) {
         throw new ReferenceError(fmt('unable to find a mock for %@ %@', item.method, item.url));
@@ -150,8 +163,10 @@ io = {
       }, res.delay);
     }
   },
-  mockMeta:         null,
-  mockRequest:      function (method, url, error, response, delay, onStart) {
+
+  mockMeta: null,
+
+  mockRequest: function (method, url, error, response, delay, onStart) {
     var mkey = method.toLowerCase();
     var mocks = io.mockMeta[mkey] = io.mockMeta[mkey] || [];
     mocks.push({
@@ -164,7 +179,8 @@ io = {
       }
     );
   },
-  mockPopResponse:  function (method, url) {
+
+  mockPopResponse: function (method, url) {
     var mkey = method.toLowerCase();
     var mock, mocks = io.mockMeta[mkey];
     if (mocks) {
@@ -177,13 +193,14 @@ io = {
     }
     return mock;
   },
-  mockReset:        function () {
+
+  mockReset: function () {
     io.mockMeta = {
       events:   {},
       requests: {}
     };
-    io.socket.requestQueue = [];
-    var s = socket.socket;
+    io.sails.requestQueue = [];
+    var s = socket._raw;
     s.open = false;
     s.connected = false;
     s.connecting = false;
@@ -198,7 +215,8 @@ io = {
       s._disconnectingTimeout = null;
     }
   },
-  mockTrigger:      function (event/*, arg*/) {
+
+  mockTrigger: function (event/*, arg*/) {
     var listeners = io.mockMeta.events[event],
       args = [].slice.call(arguments, 1);
     if (!listeners) {
@@ -208,10 +226,11 @@ io = {
       listener.apply(listener.target, args.slice());
     });
   },
-  socket:           socket
-}
-;
-io.socket.on = io.socket.addListener;
+
+  sails: socket
+};
+
+io.sails.on = io.sails._raw.addEventListener;
 
 
 export default io;

@@ -17,7 +17,7 @@ moduleFor('service:sails-socket', 'SailsSocketService', {
   }
 });
 
-
+/*
 test('it waits for object to be ready', function (assert) {
   var service = this.subject();
   assert.expect(3);
@@ -62,3 +62,5 @@ test('it performs request once connected only', function (assert) {
     }, 100);
   });
 });
+
+  */

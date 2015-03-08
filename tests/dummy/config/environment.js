@@ -7,20 +7,25 @@ module.exports = function (environment) {
     baseURL:      '/',
     locationType: 'auto',
     EmberENV:     {
-      FEATURES: {
+      FEATURES:          {
         // Here you can enable experimental features on an ember canary build
         // e.g. 'with-controller': true
-      }
+      },
+      EXTEND_PROTOTYPES: true
+    },
+
+    contentSecurityPolicy: {
+      'script-src':  "'self' 'unsafe-eval' 'unsafe-inline' http://localhost:1337 ws://localhost:1337",
+      'connect-src': "'self' http://localhost:1337 ws://localhost:1337"
     },
 
     APP: {
       // Here you can pass flags/options to your application instance
       // when it is created
       SAILS_LOG_LEVEL: 'debug',
-      emberDataSails: {
-        socketScript: {
-          host: ':1337'
-        }
+      emberDataSails:  {
+        host: '//localhost:1337'/*,
+         scriptPath: '/js/dependencies/sails.io.js'*/
       }
     }
   };
