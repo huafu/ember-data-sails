@@ -58,11 +58,16 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
       /**
        * Whether to group multiple find by ID with one request with a `where`
        */
-      coalesceFindRequests: true
+      coalesceFindRequests: true,
       /**
        * The namespace of your API
        */
       namespace:            'api/v1',
+      /**
+       * If you want to use https://github.com/mphasize/sails-generate-ember-blueprints,
+       * you need to override the default serializer to be used
+       */
+      defaultSerializer: '-rest',
     });
     ```
 * To use the `SailsRESTAdapter` as the default adapter, or as a model specific adapter, extend it from `SailsRESTAdapter`:
