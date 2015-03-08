@@ -1,6 +1,6 @@
 {
   "name": "ember-data-sails",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Adapters and tools for EmberJS to work well with SailsJS",
   "directories": {
     "doc": "doc",
