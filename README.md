@@ -12,7 +12,20 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
       });
     ```
     
-    It'll use by default the `sails.io.js` located at `<hostname>:1337/js/dependencies/sails.io.js`, but you can change this using the `emberDataSails.socketScriptUrl` configuration property in `ENV.APP`, `config/environment.js` file.
+    It'll use by default the `sails.io.js` located at `<hostname>:1337/js/dependencies/sails.io.js`, but you can change this using configuration in `config/environment.js` file:
+    
+    ```js
+    ENV.APP = {
+      // if you want some useful debug information related to sails
+      SAILS_LOG_LEVEL: 'debug',
+      emberDataSails:  {
+        // default is to use same host and port as the ember app:
+        host: '//localhost:1337',
+        // this is the default and is the path to the sails io script:
+        //scriptPath: '/js/dependencies/sails.io.js'
+      }
+    }
+    ```
     
 * `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
@@ -46,6 +59,10 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
        * Whether to group multiple find by ID with one request with a `where`
        */
       coalesceFindRequests: true
+      /**
+       * The namespace of your API
+       */
+      namespace:            'api/v1',
     });
     ```
 * To use the `SailsRESTAdapter` as the default adapter, or as a model specific adapter, extend it from `SailsRESTAdapter`:
@@ -109,7 +126,7 @@ properties of the adapter to do a request on the API.
 
 ## TODO
 
-* Write unit tests!!!
+* Write more and fix unit tests!!!
 * Auto re-subscribe to subscribed records/models after a connection reset (it's already automatically re-listening for the events on the socket, but if Sails application have rebooted, we need to re-subscribe on the server somehow with the client socket)
 
 
