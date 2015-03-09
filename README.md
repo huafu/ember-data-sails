@@ -27,6 +27,16 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     }
     ```
     
+    Also don't forget to add the rules for CSP:
+    
+    ```js
+    // allow to fetch the script
+    ENV.contentSecurityPolicy['script-src'] += ' http://localhost:1337';
+    // allow the websocket to connect
+    ENV.contentSecurityPolicy['connect-src'] += ' http://localhost:1337 ws://localhost:1337';
+    ```
+    
+    
 * `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsSerializer`: used by default when you use a Sails adapter, you shouldn't need to access it but it's there in case
