@@ -2,6 +2,8 @@
 
 Adapters and tools for Ember to work well with Sails. Provides `SailsSocketService`, `SailsRESTAdapter`, `SailsSocketAdapter`, `SailsSerializer` and extends the store so that you can subscribe for records while pushing a payload.
 
+**Note**: If you want to use this adapter with a version of SailsJS `< 0.11.0` you have to use version [`0.0.12`](https://github.com/huafu/ember-data-sails/tree/v0.0.12) of this addon.
+
 * `SailsSocketService`: injected in `adapters`, `controllers` and `routes` on `sailsSocket` property, it allow you to do Ember friendly requests using Sails socket. Example:
 
     ```js
