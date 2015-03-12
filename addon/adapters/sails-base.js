@@ -209,7 +209,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @return {Boolean} Returns `true` if it's an error object, else `false`
    */
   isErrorObject: function (data) {
-    return !!(data.error && data.model && data.summary && data.status);
+    return !!(data && data.error && data.model && data.summary && data.status);
   },
 
   /**

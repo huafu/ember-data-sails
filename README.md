@@ -2,6 +2,8 @@
 
 Adapters and tools for Ember to work well with Sails. Provides `SailsSocketService`, `SailsRESTAdapter`, `SailsSocketAdapter`, `SailsSerializer` and extends the store so that you can subscribe for records while pushing a payload.
 
+**Note**: If you want to use this adapter with a version of SailsJS `< 0.11.0` you have to use version [`0.0.12`](https://github.com/huafu/ember-data-sails/tree/v0.0.12) of this addon.
+
 * `SailsSocketService`: injected in `adapters`, `controllers` and `routes` on `sailsSocket` property, it allow you to do Ember friendly requests using Sails socket. Example:
 
     ```js
@@ -27,6 +29,16 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     }
     ```
     
+    Also don't forget to add the rules for CSP:
+    
+    ```js
+    // allow to fetch the script
+    ENV.contentSecurityPolicy['script-src'] += ' http://localhost:1337';
+    // allow the websocket to connect
+    ENV.contentSecurityPolicy['connect-src'] += ' http://localhost:1337 ws://localhost:1337';
+    ```
+    
+    
 * `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsSerializer`: used by default when you use a Sails adapter, you shouldn't need to access it but it's there in case
@@ -37,9 +49,6 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
 ## Installation
 
 * `npm install --save-dev ember-data-sails`
-* If you plan on using sockets:
-  * `ember generate ember-data-sails`
-  * add `app.import('vendor/js/sails.io.js');` to your `Brocfile.js`
 
 ## Using
 
