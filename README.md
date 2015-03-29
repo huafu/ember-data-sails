@@ -76,7 +76,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
        * If you want to use https://github.com/mphasize/sails-generate-ember-blueprints,
        * you need to override the default serializer to be used
        */
-      defaultSerializer: 'rest',
+      //defaultSerializer: '-rest',
     });
     ```
 * To use the `SailsRESTAdapter` as the default adapter, or as a model specific adapter, extend it from `SailsRESTAdapter`:
