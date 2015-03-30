@@ -33,7 +33,7 @@ export default SailsBaseAdapter.extend({
       csrfTokenUrl = Ember.A([
         this.get('host'),
         csrfTokenPath.charAt(0) === '/' ? null : this.get('namespace'),
-        csrfTokenPath.replace(/^\/?/, '/')
+        csrfTokenPath.replace(/^\//, '')
       ]).filter(Boolean).join('/');
       if (!/^https?:\/\//.test(csrfTokenUrl)) {
         csrfTokenUrl = '/' + csrfTokenUrl;

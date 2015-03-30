@@ -37,7 +37,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @property useCSRF
    * @type Boolean
    */
-  useCSRF: null,
+  useCSRF: false,
 
   /**
    * Path where to GET the CSRF
