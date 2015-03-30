@@ -7,6 +7,13 @@ var EmberString = Ember.String;
 var fmt = EmberString.fmt;
 var pluralize = EmberString.pluralize;
 var camelize = EmberString.camelize;
+var run = Ember.run;
+var schedule = run.schedule;
+var bind = run.bind;
+var $ = Ember.$;
+var RSVP = Ember.RSVP;
+var computed = Ember.computed;
+var bool = computed.bool;
 
 /**
  * Base adapter for SailsJS adapters
@@ -19,28 +26,52 @@ var camelize = EmberString.camelize;
  * @constructor
  */
 export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
+  /**
+   * @inheritDoc
+   */
   defaultSerializer: 'sails',
+
   /**
    * Whether to use CSRF
    * @since 0.0.1
    * @property useCSRF
    * @type Boolean
    */
-  useCSRF:           null,
+  useCSRF: false,
+
+  /**
+   * Path where to GET the CSRF
+   * @since 0.0.15
+   * @property csrfTokenPath
+   * @type String
+   */
+  csrfTokenPath: '/csrfToken',
+
   /**
    * The csrfToken
    * @since 0.0.1
    * @property csrfToken
    * @type String
    */
-  csrfToken:         null,
+  csrfToken: null,
+
   /**
    * Are we loading CSRF token?
    * @since 0.0.7
    * @property isLoadingCSRF
    * @type Boolean
    */
-  isLoadingCSRF:     null,
+  isLoadingCSRF: bool('_csrfTokenLoadingPromise'),
+
+  /**
+   * The promise responsible of the current CSRF token fetch
+   * @since 0.0.15
+   * @property _csrfTokenLoadingPromise
+   * @type Promise
+   * @private
+   */
+  _csrfTokenLoadingPromise: null,
+
 
   /**
    * @since 0.0.4
@@ -49,7 +80,6 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    */
   init: function () {
     this._super();
-    this.set('isLoadingCSRF', false);
     this.set('csrfToken', null);
   },
 
@@ -61,7 +91,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @inheritDoc
    */
   ajax: function (url, method, options) {
-    var self = this, run, out = {};
+    var processRequest, out = {};
     method = method.toUpperCase();
     if (!options) {
       options = {};
@@ -70,33 +100,36 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
       // so that we can add our CSRF token
       options.data = {};
     }
-    run = function () {
-      return self._request(out, url, method, options).then(function (response) {
-        self.info(fmt('%@ %@ request on %@: SUCCESS', out.protocol, method, url));
-        self.debug('  → request:', options.data);
-        self.debug('  ← response:', response);
-        if (self.isErrorObject(response)) {
-          if (response.errors) {
-            return Ember.RSVP.reject(new DS.InvalidError(self.formatError(response)));
+    processRequest = bind(this, function () {
+      return this._request(out, url, method, options)
+        .then(bind(this, function (response) {
+          this.info(fmt('%@ %@ request on %@: SUCCESS', out.protocol, method, url));
+          this.debug('  → request:', options.data);
+          this.debug('  ← response:', response);
+          if (this.isErrorObject(response)) {
+            if (response.errors) {
+              return RSVP.reject(new DS.InvalidError(this.formatError(response)));
+            }
+            return RSVP.reject(response);
           }
-          return Ember.RSVP.reject(response);
-        }
-        return response;
-      }).catch(function (error) {
-        self.warn(fmt('%@ %@ request on %@: ERROR', out.protocol, method, url));
-        self.info('  → request:', options.data);
-        self.info('  ← error:', error);
-        return Ember.RSVP.reject(error);
-      });
-    };
+          return response;
+        }))
+        .catch(bind(this, function (error) {
+          this.warn(fmt('%@ %@ request on %@: ERROR', out.protocol, method, url));
+          this.info('  → request:', options.data);
+          this.info('  ← error:', error);
+          return RSVP.reject(error);
+        }));
+    });
     if (method !== 'GET') {
-      return this.fetchCSRFToken().then(function () {
-        self.checkCSRF(options.data);
-        return run();
-      });
+      return this.fetchCSRFToken()
+        .then(bind(this, function () {
+          this.checkCSRF(options.data);
+          return processRequest();
+        }));
     }
     else {
-      return run();
+      return processRequest();
     }
   },
 
@@ -110,7 +143,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
     var data;
 
     try {
-      data = Ember.$.parseJSON(jqXHR.responseText);
+      data = $.parseJSON(jqXHR.responseText);
     }
     catch (err) {
       data = jqXHR.responseText;
@@ -134,44 +167,40 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @since 0.0.3
    * @method fetchCSRFToken
    * @param {Boolean} [force] If `true`, the token will be fetched even if it has already been fetched
-   * @return {Ember.RSVP.Promise}
+   * @return {RSVP.Promise}
    */
   fetchCSRFToken: function (force) {
-    var self = this;
+    var self = this, promise;
     if (this.get('useCSRF') && (force || !this.get('csrfToken'))) {
-      if (this.get('isLoadingCSRF')) {
-        return new Ember.RSVP.Promise(function (resolve, reject) {
-          self.one('didLoadCSRF', function (token, error) {
-            if (token) {
-              resolve(token);
-            }
-            else {
-              reject(error);
-            }
-          });
-        }, 'waiting for CSRF to load');
-      }
-      else {
-        this.set('isLoadingCSRF', true);
+      if (!(promise = this.get('_csrfTokenLoadingPromise'))) {
         this.set('csrfToken', null);
         this.debug('fetching CSRF token...');
-        return this._fetchCSRFToken()
+        promise = this._fetchCSRFToken()
+          // handle success response
           .then(function (token) {
-            self.set('isLoadingCSRF', false);
+            if (!token) {
+              self.error('Got an empty CSRF token from the server.');
+              return RSVP.reject('Got an empty CSRF token from the server!');
+            }
             self.info('got a new CSRF token:', token);
             self.set('csrfToken', token);
-            Ember.run.next(self, 'trigger', 'didLoadCSRF', token);
+            schedule('actions', self, 'trigger', 'didLoadCSRF', token);
             return token;
           })
+          // handle errors
           .catch(function (error) {
-            self.set('isLoadingCSRF', false);
             self.error('error trying to get new CSRF token:', error);
-            Ember.run.next(self, 'trigger', 'didLoadCSRF', null, error);
+            schedule('actions', self, 'trigger', 'didLoadCSRF', null, error);
             return error;
-          });
+          })
+          // reset the loading promise
+          .finally(bind(this, 'set', '_csrfTokenLoadingPromise', null));
+        this.set('_csrfTokenLoadingPromise', promise);
       }
+      // return the loading promise
+      return promise;
     }
-    return Ember.RSVP.resolve(null);
+    return RSVP.resolve(null);
   },
 
   /**
@@ -225,9 +254,9 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
       return data;
     }
     this.info('adding CSRF token');
-    if (!this.csrfToken || this.csrfToken.length === 0) {
+    if (!this.csrfToken) {
       this.error('CSRF not fetched yet');
-      throw new DS.Error("CSRF Token not fetched yet.");
+      throw new Error("CSRF Token not fetched yet.");
     }
     data._csrf = this.csrfToken;
     return data;
