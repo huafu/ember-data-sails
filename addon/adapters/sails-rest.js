@@ -1,5 +1,9 @@
 import DS from 'ember-data';
 import SailsBaseAdapter from './sails-base';
+import Ember from 'ember';
+
+
+var computed = Ember.computed;
 
 /**
  * Adapter for SailsJS HTTP REST API
@@ -10,6 +14,35 @@ import SailsBaseAdapter from './sails-base';
  * @constructor
  */
 export default SailsBaseAdapter.extend({
+  /**
+   * The full URL to the CSRF token
+   * @since 0.0.15
+   * @property csrfTokenUrl
+   * @type String
+   */
+  csrfTokenUrl: computed('host', 'namespace', 'csrfTokenPath', function (key, value) {
+    var csrfTokenUrl, csrfTokenPath;
+    if (arguments.length > 1) {
+      this._csrfTokenUrl = csrfTokenUrl = value;
+    }
+    else if (this._csrfTokenUrl !== undefined) {
+      csrfTokenUrl = this._csrfTokenUrl;
+    }
+    else {
+      csrfTokenPath = this.get('csrfTokenPath');
+      csrfTokenUrl = Ember.A([
+        this.get('host'),
+        csrfTokenPath.charAt(0) === '/' ? null : this.get('namespace'),
+        csrfTokenPath.replace(/^\/?/, '/')
+      ]).filter(Boolean).join('/');
+      if (!/^https?:\/\//.test(csrfTokenUrl)) {
+        csrfTokenUrl = '/' + csrfTokenUrl;
+      }
+    }
+    return csrfTokenUrl;
+  }),
+
+
   /**
    * Sends a request over HTTP
    *
@@ -22,7 +55,7 @@ export default SailsBaseAdapter.extend({
    * @returns {Ember.RSVP.Promise}
    * @private
    */
-  _request: function(out, url, method, options) {
+  _request: function (out, url, method, options) {
     out.protocol = 'http';
     return this._restAdapter_ajax.call(this, url, method, options);
   },
@@ -36,13 +69,14 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCSRFToken: function () {
-    return this._restAdapter_ajax.call(this, '/csrfToken', 'get').then(function (tokenObject) {
-      return tokenObject._csrf;
-    });
+    return this._restAdapter_ajax.call(this, this.get('csrfTokenUrl'), 'get')
+      .then(function (tokenObject) {
+        return tokenObject._csrf;
+      });
   },
 
   /**
-   * We need to copy the original `ajax` method to be able ot use it inside our own `_request`
+   * We need to copy the original `ajax` method to be able to use it inside our own `_request`
    *
    * @since 0.0.8
    * @method _restAdapter_ajax

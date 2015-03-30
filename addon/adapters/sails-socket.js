@@ -64,7 +64,7 @@ export default SailsBaseAdapter.extend({
    * @returns {Ember.RSVP.Promise}
    * @private
    */
-  _request: function(out, url, method, options) {
+  _request: function (out, url, method, options) {
     out.protocol = 'socket';
     return this.sailsSocket.request(method, url, options.data);
   },
@@ -103,9 +103,10 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCSRFToken: function () {
-    return this.sailsSocket.request('get', '/csrfToken').then(function (tokenObject) {
-      return tokenObject._csrf;
-    });
+    return this.sailsSocket.request('get', this.get('csrfTokenPath').replace(/^\/?/, '/'))
+      .then(function (tokenObject) {
+        return tokenObject._csrf;
+      });
   },
 
   /**
