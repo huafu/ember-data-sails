@@ -312,7 +312,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     if (!isAlive(this)) {
       return;
     }
-    this.trigger(event + '.' + message.verb, message);
+    this.trigger(event + (message && message.verb ? '.' + message.verb : ''), message);
   },
 
   /**
