@@ -35,7 +35,7 @@ export default SailsBaseAdapter.extend({
         csrfTokenPath.charAt(0) === '/' ? null : this.get('namespace'),
         csrfTokenPath.replace(/^\//, '')
       ]).filter(Boolean).join('/');
-      if (!/^https?:\/\//.test(csrfTokenUrl)) {
+      if (!/^(https?:)?\/\//.test(csrfTokenUrl)) {
         csrfTokenUrl = '/' + csrfTokenUrl;
       }
     }

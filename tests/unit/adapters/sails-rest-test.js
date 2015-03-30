@@ -29,9 +29,8 @@ function addCsrf(obj) {
 }
 
 
-
-test('it has correct URL for the CSRF token', function(assert) {
-  assert.expect(6);
+test('it has correct URL for the CSRF token', function (assert) {
+  assert.expect(7);
 
   var adapter = this.subject();
 
@@ -51,4 +50,7 @@ test('it has correct URL for the CSRF token', function(assert) {
 
   run(adapter, 'set', 'csrfTokenPath', '/csrfToken');
   assert.equal(adapter.get('csrfTokenUrl'), '/csrfToken', 'URL should be correct with `namespace` set, absolute path');
+
+  run(adapter, 'set', 'host', '//example.com:1337');
+  assert.equal(adapter.get('csrfTokenUrl'), '//example.com:1337/csrfToken', 'URL should be correct with `namespace` and `host` set, absolute path and protocol independent host');
 });
