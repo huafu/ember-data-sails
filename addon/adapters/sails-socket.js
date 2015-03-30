@@ -64,7 +64,7 @@ export default SailsBaseAdapter.extend({
    * @returns {Ember.RSVP.Promise}
    * @private
    */
-  _request: function(out, url, method, options) {
+  _request: function (out, url, method, options) {
     out.protocol = 'socket';
     return this.sailsSocket.request(method, url, options.data);
   },
@@ -75,7 +75,6 @@ export default SailsBaseAdapter.extend({
    * @inheritDoc
    */
   buildURL: function (type, id, record) {
-    this._listenToSocket(type);
     return this._super(type, id, record);
   },
 
