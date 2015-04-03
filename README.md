@@ -50,6 +50,10 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
 
 * `npm install --save-dev ember-data-sails`
 
+### CSRF config
+
+* If you want to use CSRF token with the REST adapter, don't forget that you'll need to setup it as an object (and not `true` only) in the SailsJS config file (thanks @tibotiber for [figuring this out](https://github.com/huafu/ember-data-sails/issues/11#issuecomment-89130498)).
+
 ## Using
 
 **You must set `sails.config.blueprints.pluralize` to `true` in your Sails API  to make the adapters works**
