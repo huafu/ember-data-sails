@@ -13,37 +13,47 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
         // do something with the response
       });
     ```
-    
-    It'll use by default the `sails.io.js` located at `<hostname>:1337/js/dependencies/sails.io.js`, but you can change this using configuration in `config/environment.js` file:
-    
+
+    In order to use the `SailsSocketService`, you're application will need to load `sails.io.js`. This can be installed by running:
+
+    ```
+    bower install sails.io.js
+    ```
+
+    and then adding the following to your `Brocfile.js` or `ember-cli-build.js` (ember-cli >= 1.13):
+
+    ```js
+    app.import(app.bowerDirectory + '/sails.io.js/dist/sails.io.js');
+    ```
+
+    Alternatively, you may specify an alternative path to `sails.io.js` using the `scriptPath` property. This can be changed in your `config/environment.js` file:
+
     ```js
     ENV.APP = {
       // if you want some useful debug information related to sails
       SAILS_LOG_LEVEL: 'debug',
       emberDataSails:  {
-        // default is to use same host and port as the ember app:
-        host: '//localhost:1337',
-        // this is the default and is the path to the sails io script:
-        //scriptPath: '/js/dependencies/sails.io.js'
+        // Sails serves up sails.io.js by default at the following path
+        scriptPath: '//localhost:1337/js/dependencies/sails.io.js'
       }
     }
     ```
-    
-    Also don't forget to add the rules for CSP:
-    
+
+    Also don't forget to add the rules for CSP for wherever you script is hosted:
+
     ```js
     // allow to fetch the script
     ENV.contentSecurityPolicy['script-src'] += ' http://localhost:1337';
     // allow the websocket to connect
     ENV.contentSecurityPolicy['connect-src'] += ' http://localhost:1337 ws://localhost:1337';
     ```
-    
-    
+
+
 * `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsSerializer`: used by default when you use a Sails adapter, you shouldn't need to access it but it's there in case
 * `DS.Store.pushPayload([type], payload, [subscribe=false])`: as the original one from Ember Data, except it accepts an additional parameter which, when set to `true`, will tell the socket adapter to subscribe to the pushed records (see below)
-* `DS.Store.subscribe(type, ids)`: tells the sails socket adapter to subscribe to those models (see below) 
+* `DS.Store.subscribe(type, ids)`: tells the sails socket adapter to subscribe to those models (see below)
 
 
 ## Installation
@@ -62,7 +72,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     ```js
     // file: app/adapters/application.js
     import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
-    
+
     export default SailsSocketAdapter.extend({
       /**
        * Whether to use CSRF tokens or not
@@ -87,7 +97,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     ```js
     // file: app/adapters/application.js
     import SailsRESTAdapter from 'ember-data-sails/adapters/sails-rest';
-    
+
     export default SailsRESTAdapter.extend({
       /**
        * The host of your API
@@ -119,7 +129,7 @@ properties of the adapter to do a request on the API.
     * `subscribeMethod`: `get`, `post`, ... defaults to `post`
     * `subscribeEndpoint`: the endpoint to do the request on, defaults to `/socket/subscribe`
     * Of course you'll need to create a basic controller in your Sails API. Here is an example:
-    
+
         ```js
         // api/controllers/SocketController.js
         module.exports = {
