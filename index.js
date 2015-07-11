@@ -28,8 +28,8 @@ module.exports = {
       // If host is not specified, assume that user wants ember-cli to package it up as part of the asset pipeline.
       // Note that sails.io.js must be installed either manually or `bower install sails.io.js` for this to work.
 
-      if(!options.scriptPath) {
-        return '<script type="text/javascript">io.sails.autoConnect = false; io.sails.emberDataSailsReady = true;</script>';
+      if(!options.scriptPath && options.sailsHost) {
+        return '<script type="text/javascript">io.sails.url = "' + options.sailsHost + '";io.sails.autoConnect = false; io.sails.emberDataSailsReady = true;</script>';
       }
     }
   }
