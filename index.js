@@ -9,6 +9,12 @@ module.exports = {
 
     if (config.APP && config.APP.emberDataSails) {
       options = config.APP.emberDataSails;
+
+      // if no scriptPath or sailsHost is defined, default to...
+      if(!options.scriptPath && !options.sailsHost) {
+        options.scriptPath = "//localhost:1337/js/dependencies/sails.io.js";
+      }
+
     } else {
       options = {};
     }
