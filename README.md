@@ -16,7 +16,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
 
     In order to use the `SailsSocketService`, you're application will need to load `sails.io.js`. If not otherwise specified, it will be loaded from `//localhost:1337/js/dependencies/sails.io.js`, which is served through Sails by default.
 
-    If you'd like to load `sails.io.js` from an external location, you may specify its path using the `scriptPath` property. This can be changed in your `config/environment.js` file:
+    If you'd like to change the path of your script file *AND* it's still served from your Sails server, you can simply change the `scriptPath` property to a path of your choosing in your `config/environment.js` file:
 
     ```js
     ENV.APP = {
@@ -29,29 +29,23 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     }
     ```
 
-    Alternatively, you may install `sails.io.js` locally as part of your Ember project. This has the unique benefit of the script being treated like any other in the Ember-CLI asset pipeline. In addition, if you're deploying using [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy), you'll get the benefit of having that script reside on a CDN. You can install the script locally like so:
-
-    ```
-    bower install sails.io.js
-    ```
-
-    then adding the following to your `Brocfile.js` or `ember-cli-build.js` (ember-cli >= 1.13):
-
-    ```js
-    app.import(app.bowerDirectory + '/sails.io.js/dist/sails.io.js');
-    ```
-
-    Finally, you'll need to set the `sailsHost` property to the URL of your Sails instance like so:
+    Alternatively, if you'd like to load the script from an external location that is *_NOT_* your Sails server, you may do so using the following properties:
 
     ```js
     // environment.js
     ENV.APP {
       emberDataSails: {
-        // url to your Sails instance
+        // tells ember-data-sails to load an external script
+        loadExternalScript: true,
+        // the url of the script
+        scriptPath: 'https://as889324.maxcdn.com/sails.io.js',
+        // the url to your Sails instance
         sailsHost: "https://localhost:1337"
       }
     }
     ```
+
+    The reason that you must  specify that the script is to be loaded from an external location is because `sails.io.js` will automatically attempt to connect to whatever server the file is loaded by. Therefore, if you're Sails server lives on a different host, other options need to be set to enable cross-domain communication. You can read more [here](https://github.com/balderdashy/sails.io.js#cross-domain).
 
     Also don't forget to add the rules for CSP for wherever you script is hosted:
 

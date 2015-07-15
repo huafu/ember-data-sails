@@ -61,6 +61,8 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     var script = document.getElementById('eds-sails-io-script');
     if(script) {
       return script.src.replace(/^([^:]+:\/\/[^\/]+).*$/g, '$1');
+    } else {
+      return null;
     }
   }),
 
