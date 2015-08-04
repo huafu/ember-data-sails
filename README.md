@@ -69,18 +69,18 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
        */
       useCSRF:              true,
       /**
+       * The path to use when the CSRF token needs to be retrieved
+       * Default is `/csrfToken`, if not heading `/` it'll be relative to `namespace`
+       */
+      //csrfTokenPath: 'some/custom/path',
+      /**
        * Whether to group multiple find by ID with one request with a `where`
        */
       coalesceFindRequests: true,
       /**
        * The namespace of your API
        */
-      namespace:            'api/v1',
-      /**
-       * If you want to use https://github.com/mphasize/sails-generate-ember-blueprints,
-       * you need to override the default serializer to be used
-       */
-      defaultSerializer: '-rest',
+      namespace:            'api/v1'
     });
     ```
 * To use the `SailsRESTAdapter` as the default adapter, or as a model specific adapter, extend it from `SailsRESTAdapter`:
@@ -92,7 +92,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
       /**
        * The host of your API
        */
-      host:                 'localhost:1337',
+      host:                 'http://localhost:1337',
       /**
        * The namespace of your API
        */
@@ -108,7 +108,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     });
     ```
 
-* **NEW** - Since `0.0.11` you can ask the API to subscribe to some models, useful when you want for example to
+* Since `0.0.11` you can ask the API to subscribe to some models, useful when you want for example to
 preload some data at the application start from some serialized JSON in a `<meta>` tag.
 While it's easy to push data into the store with `store.pushPayload`, then the records are not
 subscribed until you save them or get them again from Sails using the socket adapter.
@@ -141,10 +141,16 @@ properties of the adapter to do a request on the API.
           }
         };
 
+* Using [sails-generate-ember-blueprints](https://github.com/mphasize/sails-generate-ember-blueprints): if you want to use this adapter in conjunction with Ember blueprints for Sails from [Marcus](https://github.com/mphasize), you need to define it in the `config/environment.js` like this:
+
+    ```js
+    ENV.APP.emberDataSails.useSailsEmberBlueprints = true;
+    ```
+
 
 ## TODO
 
-* Write more and fix unit tests!!!
+* Write more unit tests!!!
 * Auto re-subscribe to subscribed records/models after a connection reset (it's already automatically re-listening for the events on the socket, but if Sails application have rebooted, we need to re-subscribe on the server somehow with the client socket)
 
 
@@ -152,4 +158,4 @@ properties of the adapter to do a request on the API.
 
 _While this was first inspired from [ember-data-sails-adapter](https://github.com/bmac/ember-data-sails-adapter), it has now been fully re-written, with a totally different approach, and, as of the day this was written, with more features._
 
-* <img src="https://s.gravatar.com/avatar/950590a0d4bc96f4a239cac955112eeb?s=24" valign="absmiddle"> [Huafu Gandon](http://huafu.github.com)
+* <img src="https://s.gravatar.com/avatar/950590a0d4bc96f4a239cac955112eeb?s=24" valign="absmiddle"> [Huafu Gandon](http://huafu.github.com) - [@huafu_g](https://twitter.com/huafu_g)

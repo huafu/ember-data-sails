@@ -75,7 +75,6 @@ export default SailsBaseAdapter.extend({
    * @inheritDoc
    */
   buildURL: function (type, id, record) {
-    this._listenToSocket(type);
     return this._super(type, id, record);
   },
 
