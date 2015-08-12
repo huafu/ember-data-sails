@@ -242,8 +242,10 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
         return;
       }
       this.one('didConnect', bind(this, function () {
-        for(var i = 0; i < this._waitingForSockets.length; i++) {
-          this._waitingForSockets[i].call(this, null, this._sailsSocket);
+        var callbacks = this._waitingForSockets;
+        delete this._waitingForSockets;
+        for(var i = 0; i < callbacks.length; i++) {
+          callbacks[i].call(this, null, this._sailsSocket);
         }
       }));
       if (this.get('isInitialized')) {
