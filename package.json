@@ -11,7 +11,7 @@
     "build": "ember build",
     "test": "ember test"
   },
-  "repository": "https://github.com/huafu/ember-data-sails.git",
+  "repository": "https://github.com/brickclick/ember-data-sails.git#bc-ember-data-sails",
   "engines": {
     "node": ">= 0.10.0"
   },
