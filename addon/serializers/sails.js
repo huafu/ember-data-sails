@@ -36,7 +36,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extractArray
    * @inheritDoc
    */
-  extractArray: blueprintsWrapMethod(function (store, primaryType, payload) {
+  normalizeArrayResponse: blueprintsWrapMethod(function (store, primaryType, payload) {
     var newPayload = {};
     newPayload[pluralize(primaryType.typeKey)] = payload;
     return this._super(store, primaryType, newPayload);
@@ -47,7 +47,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extractSingle
    * @inheritDoc
    */
-  extractSingle: blueprintsWrapMethod(function (store, primaryType, payload, recordId) {
+  normalizeSingleResponse: blueprintsWrapMethod(function (store, primaryType, payload, recordId) {
     var newPayload;
     if (payload === null) {
       return this._super.apply(this, arguments);
@@ -62,7 +62,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extractDeleteRecord
    * @inheritDoc
    */
-  extractDeleteRecord: blueprintsWrapMethod(function (store, type, payload, id, requestType) {
+  normalizeDeleteRecordResponse: blueprintsWrapMethod(function (store, type, payload, id, requestType) {
     return this._super(store, type, null, id, requestType);
   }),
 
@@ -73,7 +73,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    */
   serializeIntoHash: blueprintsWrapMethod(function (data, type, record, options) {
     var json;
-    if (Ember.keys(data).length > 0) {
+    if (Object.keys(data).length > 0) {
       this.error(
         fmt('trying to serialize multiple records in one hash for type %@', type.typeKey),
         data
@@ -100,7 +100,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extract
    * @inheritDoc
    */
-  extract: function (store, type/*, payload, id, requestType*/) {
+  normalizeResponse: function (store, type/*, payload, id, requestType*/) {
     var adapter, typeKey, isUsingSocketAdapter;
     // this is the only place we have access to the store, so that we can get the adapter and check
     // if it is an instance of sails socket adapter, and so register for events if necessary on that
