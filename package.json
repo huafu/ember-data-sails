@@ -1,5 +1,5 @@
 {
-  "name": "bc-ember-data-sails",
+  "name": "ember-data-sails",
   "version": "0.0.16",
   "description": "Adapters and tools for EmberJS to work well with SailsJS",
   "directories": {
@@ -11,17 +11,11 @@
     "build": "ember build",
     "test": "ember test"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/brickclick/ember-data-sails.git.git#bc-ember-data-sails"
-  },
+  "repository": "https://github.com/huafu/ember-data-sails.git",
   "engines": {
     "node": ">= 0.10.0"
   },
-  "author": {
-    "name": "Brickclick",
-    "email": "kevin@brickclickrms.com"
-  },
+  "author": "Huafu Gandon <huafu.gandon@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "broccoli-asset-rev": "^2.0.2",
@@ -46,31 +40,5 @@
   ],
   "ember-addon": {
     "configPath": "tests/dummy/config"
-  },
-  "gitHead": "7df416974e7c85d63ff63b84c164c61c94ae7e56",
-  "bugs": {
-    "url": "https://github.com/brickclick/ember-data-sails.git/issues"
-  },
-  "homepage": "https://github.com/brickclick/ember-data-sails.git",
-  "_id": "bc-ember-data-sails@0.0.16",
-  "_shasum": "97daa5da0ab54cff2e25b0f5baade7243b29c6c3",
-  "_from": "bc-ember-data-sails@*",
-  "_npmVersion": "2.7.4",
-  "_nodeVersion": "0.12.0",
-  "_npmUser": {
-    "name": "t3rminus",
-    "email": "k3vin.net@gmail.com"
-  },
-  "dist": {
-    "shasum": "97daa5da0ab54cff2e25b0f5baade7243b29c6c3",
-    "tarball": "http://registry.npmjs.org/bc-ember-data-sails/-/bc-ember-data-sails-0.0.16.tgz"
-  },
-  "maintainers": [
-    {
-      "name": "t3rminus",
-      "email": "k3vin.net@gmail.com"
-    }
-  ],
-  "_resolved": "https://registry.npmjs.org/bc-ember-data-sails/-/bc-ember-data-sails-0.0.16.tgz",
-  "readme": "ERROR: No README data found!"
+  }
 }
