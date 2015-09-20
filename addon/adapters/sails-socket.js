@@ -124,7 +124,7 @@ export default SailsBaseAdapter.extend({
       record.id = message.id;
     }
     payload[pluralize(camelize(type.typeKey))] = [record];
-    store.pushPayload(type, payload);
+    store.pushPayload(type.typeKey, payload);
   },
 
   /**
