@@ -23,9 +23,11 @@ export function initialize(container, application) {
   WithLoggerMixin.reopen(methods);
 
   container.register('service:sails-socket', SailsSocketService);
+  container.register('config:ember-data-sails', application.get('emberDataSails') || {}, {instantiate: false});
 
   // setup injections
   application.inject('adapter', 'sailsSocket', 'service:sails-socket');
+  application.inject('serializer', 'config', 'config:ember-data-sails');
   application.inject('route', 'sailsSocket', 'service:sails-socket');
   application.inject('controller', 'sailsSocket', 'service:sails-socket');
 }

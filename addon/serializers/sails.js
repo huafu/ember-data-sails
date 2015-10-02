@@ -2,13 +2,13 @@ import Ember from 'ember';
 import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
 import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
-import ENV from '../config/environment';
 
 
 var $ = Ember.$;
 var EmberString = Ember.String;
 var fmt = EmberString.fmt;
 var pluralize = EmberString.pluralize;
+var computed = Ember.computed;
 
 
 function blueprintsWrapMethod(method) {
@@ -24,12 +24,20 @@ function blueprintsWrapMethod(method) {
  */
 var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
   /**
+   * The config of the addon will be set here by the initializer
+   * @since 0.0.17
+   * @property config
+   * @type Object
+   */
+  config: {},
+
+  /**
    * Whether to use `sails-generate-ember-blueprints` or not
    * @since 0.0.15
    * @property useSailsEmberBlueprints
    * @type Boolean
    */
-  useSailsEmberBlueprints: ENV.APP.emberDataSails.useSailsEmberBlueprints,
+  useSailsEmberBlueprints: computed.readOnly('config.useSailsEmberBlueprints'),
 
   /**
    * @since 0.0.11
