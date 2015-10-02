@@ -123,7 +123,7 @@ export default SailsBaseAdapter.extend({
     if (!record.id && message.id) {
       record.id = message.id;
     }
-    payload[pluralize(camelize(type.typeKey))] = [record];
+    payload[pluralize(camelize(type.modelName))] = [record];
     store.pushPayload(type, payload);
   },
 
@@ -150,7 +150,7 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _handleSocketRecordDeleted: function (store, type, message) {
-    var record = store.getById(type.typeKey, message.id);
+    var record = store.getById(type.modelName, message.id);
     if (record && typeof record.get('dirtyType') === 'undefined') {
       record.unloadRecord();
     }
@@ -195,7 +195,7 @@ export default SailsBaseAdapter.extend({
         this._scheduledSubscriptions = {};
       }
       // use an object and keys so that we don't have duplicate IDs
-      key = camelize(type.typeKey);
+      key = camelize(type.modelName);
       if (!this._scheduledSubscriptions[key]) {
         this._scheduledSubscriptions[key] = {};
       }

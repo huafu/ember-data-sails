@@ -46,7 +46,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    */
   extractArray: blueprintsWrapMethod(function (store, primaryType, payload) {
     var newPayload = {};
-    newPayload[pluralize(primaryType.typeKey)] = payload;
+    newPayload[pluralize(primaryType.modelName)] = payload;
     return this._super(store, primaryType, newPayload);
   }),
 
@@ -61,7 +61,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
       return this._super.apply(this, arguments);
     }
     newPayload = {};
-    newPayload[pluralize(primaryType.typeKey)] = [payload];
+    newPayload[pluralize(primaryType.modelName)] = [payload];
     return this._super(store, primaryType, newPayload, recordId);
   }),
 
@@ -83,7 +83,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     var json;
     if (Ember.keys(data).length > 0) {
       this.error(
-        fmt('trying to serialize multiple records in one hash for type %@', type.typeKey),
+        fmt('trying to serialize multiple records in one hash for type %@', type.modelName),
         data
       );
       throw new Error('Sails does not accept putting multiple records in one hash');
@@ -109,19 +109,19 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @inheritDoc
    */
   extract: function (store, type/*, payload, id, requestType*/) {
-    var adapter, typeKey, isUsingSocketAdapter;
+    var adapter, modelName, isUsingSocketAdapter;
     // this is the only place we have access to the store, so that we can get the adapter and check
     // if it is an instance of sails socket adapter, and so register for events if necessary on that
     // model. We keep a cache here to avoid too many calls
     if (!this._modelsUsingSailsSocketAdapter) {
       this._modelsUsingSailsSocketAdapter = Object.create(null);
     }
-    typeKey = type.typeKey;
-    if (this._modelsUsingSailsSocketAdapter[typeKey] === undefined) {
+    modelName = type.modelName;
+    if (this._modelsUsingSailsSocketAdapter[modelName] === undefined) {
       adapter = store.adapterFor(type);
-      this._modelsUsingSailsSocketAdapter[typeKey] = isUsingSocketAdapter = adapter instanceof SailsSocketAdapter;
+      this._modelsUsingSailsSocketAdapter[modelName] = isUsingSocketAdapter = adapter instanceof SailsSocketAdapter;
       if (isUsingSocketAdapter) {
-        adapter._listenToSocket(type.typeKey);
+        adapter._listenToSocket(modelName);
       }
     }
     return this._super.apply(this, arguments);
@@ -141,22 +141,23 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
   _extractEmbeddedRecords: function (type, hash) {
     var self = this, serializer, store = this.store;
     type.eachRelationship(function (key, rel) {
-      var data;
+      var data, modelName;
+      modelName = rel.type.modelName;
       if ((data = hash[key])) {
         if (rel.kind === 'belongsTo') {
           if (Ember.typeOf(hash[key]) === 'object') {
-            self.debug(fmt('found 1 embedded %@ record:', rel.type.typeKey), hash[key]);
+            self.debug(fmt('found 1 embedded %@ record:', modelName), hash[key]);
             delete hash[key];
-            serializer = store.serializerFor(rel.type.typeKey);
+            serializer = store.serializerFor(modelName);
             self.store.push(rel.type, serializer.normalize(rel.type, data, null));
             hash[key] = data.id;
           }
         }
         else if (rel.kind === 'hasMany') {
-          serializer = store.serializerFor(rel.type.typeKey);
+          serializer = store.serializerFor(modelName);
           hash[key] = data.map(function (item) {
             if (Ember.typeOf(item) === 'object') {
-              self.debug(fmt('found 1 embedded %@ record:', rel.type.typeKey), item);
+              self.debug(fmt('found 1 embedded %@ record:', modelName), item);
               self.store.push(rel.type, serializer.normalize(rel.type, item, null));
               return item.id;
             }
