@@ -21,7 +21,7 @@ export default SailsBaseAdapter.extend({
    * @type String
    */
   csrfTokenUrl: computed('host', 'namespace', 'csrfTokenPath',{
-    get(key) {
+    get: function(key) {
       var csrfTokenUrl, csrfTokenPath;
       if (this._csrfTokenUrl !== undefined) {
         csrfTokenUrl = this._csrfTokenUrl;
@@ -39,7 +39,7 @@ export default SailsBaseAdapter.extend({
       }
       return csrfTokenUrl;
     },
-    set(key, value) {
+    set: function(key, value) {
       this._csrfTokenUrl = value;
       return this._csrfTokenUrl;
     }
