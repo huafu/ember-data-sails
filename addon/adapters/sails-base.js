@@ -107,10 +107,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
           this.debug('  → request:', options.data);
           this.debug('  ← response:', response);
           if (this.isErrorObject(response)) {
-            if (response.errors) {
-              return RSVP.reject(new DS.InvalidError(this.formatError(response)));
-            }
-            return RSVP.reject(response);
+            return RSVP.reject(new DS.InvalidError(this.formatError(response)));
           }
           return response;
         }))
@@ -149,7 +146,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
       data = jqXHR.responseText;
     }
 
-    if (data.errors) {
+    if (this.isErrorObject(data)) {
       this.error('error returned from Sails', data);
       return new DS.InvalidError(this.formatError(data));
     }
