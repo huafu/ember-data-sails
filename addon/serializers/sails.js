@@ -84,7 +84,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    */
   serializeIntoHash: blueprintsWrapMethod(function (data, type, record, options) {
     var json;
-    if (Ember.keys(data).length > 0) {
+    if (Object.keys(data).length > 0) {
       this.error(
         fmt('trying to serialize multiple records in one hash for type %@', type.modelName),
         data
