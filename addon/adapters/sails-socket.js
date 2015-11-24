@@ -2,7 +2,6 @@ import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
 
 var EmberString = Ember.String;
-var fmt = EmberString.fmt;
 var camelize = EmberString.camelize;
 var pluralize = EmberString.pluralize;
 var run = Ember.run;
@@ -18,6 +17,7 @@ var debounce = run.debounce;
  * @constructor
  */
 export default SailsBaseAdapter.extend({
+  store: Ember.inject.service(),
   /**
    * Holds the scheduled subscriptions
    * @since 0.0.11
@@ -169,8 +169,8 @@ export default SailsBaseAdapter.extend({
     var eventName = camelize(model).toLowerCase();
     var socket = this.sailsSocket;
     if (socket.listenFor(eventName, true)) {
-      this.notice(fmt('setting up adapter to listen for `%@` messages', model));
-      store = this.container.lookup('store:main');
+      this.notice(`setting up adapter to listen for ${model} messages`);
+      store = this.get('store');
       type = store.modelFor(model);
       socket.on(eventName + '.created', bind(this, '_handleSocketRecordCreated', store, type));
       socket.on(eventName + '.updated', bind(this, '_handleSocketRecordUpdated', store, type));
@@ -227,7 +227,7 @@ export default SailsBaseAdapter.extend({
         payload[k] = Object.keys(data[k]);
         this._listenToSocket(k);
       }
-      self.debug(fmt('asking the API to subscribe to some records of type %@', Object.keys(data).join(', ')));
+      self.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
       // ask the API to subscribe to those records
       this.fetchCSRFToken().then(function () {
         self.checkCSRF(payload);

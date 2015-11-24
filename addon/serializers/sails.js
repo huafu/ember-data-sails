@@ -6,7 +6,6 @@ import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
 
 var $ = Ember.$;
 var EmberString = Ember.String;
-var fmt = EmberString.fmt;
 var pluralize = EmberString.pluralize;
 var computed = Ember.computed;
 
@@ -83,7 +82,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     var json;
     if (Object.keys(data).length > 0) {
       this.error(
-        fmt('trying to serialize multiple records in one hash for type %@', type.modelName),
+        `trying to serialize multiple records in one hash for type ${type.modelName}`,
         data
       );
       throw new Error('Sails does not accept putting multiple records in one hash');
@@ -146,7 +145,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
       if ((data = hash[key])) {
         if (rel.kind === 'belongsTo') {
           if (Ember.typeOf(hash[key]) === 'object') {
-            self.debug(fmt('found 1 embedded %@ record:', modelName), hash[key]);
+            self.debug(`found 1 embedded ${modelName} record:`, hash[key]);
             delete hash[key];
             serializer = store.serializerFor(modelName);
             self.store.push(rel.type, serializer.normalize(rel.type, data, null));
@@ -157,7 +156,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
           serializer = store.serializerFor(modelName);
           hash[key] = data.map(function (item) {
             if (Ember.typeOf(item) === 'object') {
-              self.debug(fmt('found 1 embedded %@ record:', modelName), item);
+              self.debug(`found 1 embedded ${modelName} record:`, item);
               self.store.push(rel.type, serializer.normalize(rel.type, item, null));
               return item.id;
             }
@@ -165,7 +164,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
           });
         }
         else {
-          self.warn(fmt('unknown relationship kind %@:', rel.kind), rel);
+          self.warn(`unknown relationship kind ${rel.kind}:`, rel);
           throw new Error('Unknown relationship kind ' + rel.kind);
         }
       }
