@@ -57,6 +57,20 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
 ## Using
 
 **You must set `sails.config.blueprints.pluralize` to `true` in your Sails API  to make the adapters works**
+* If you are using *sane* (package `sane-cli`), you must change the configuration in `server/config/routes` to allow `/__getCookie` (and `/csrfToken` if needed) to be handled by the SailsJS core:
+    ```diff
+    --- a/server/config/routes.js
+    +++ b/server/config/routes.js
+    @@ -50,7 +50,7 @@ module.exports.routes = {
+       //This automatically serves all routes, apart from /api/** routes to ember
+       //(which will be initialized in assets/index.html). This route needs to be
+       //at the very bottom if you want to server other routes through Sails, because they are matched in order
+    -  '/*': { controller: 'App', action: 'serve', skipAssets: true, skipRegex: /^\/api\/.*$/ }
+    +  '/*': { controller: 'App', action: 'serve', skipAssets: true, skipRegex: /^\/(api\/.*|__getcookie|csrfToken)$/ }
+     
+       //You could also just serve the index view directly if you want
+       //'/*': { view: 'index', skipAssets: true, skipRegex: /^\/api\/.*$/ }
+    ```
 * The `SailsSocketService` is injected on all `adapters`, `controllers` and `routes` on the `sailsSocket` property
 * To use the `SailsSocketAdapter` as the default adapter, or as a model specific adapter, extend it from `SailsSocketAdapter`:
     ```js
