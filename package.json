@@ -1,6 +1,6 @@
 {
   "name": "bc-ember-data-sails",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Adapters and tools for EmberJS to work well with SailsJS",
   "directories": {
     "doc": "doc",
