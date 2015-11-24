@@ -8,7 +8,6 @@ var bind = run.bind;
 var next = run.next;
 var later = run.later;
 var EmberString = Ember.String;
-var fmt = EmberString.fmt;
 
 /**
  * Shortcut to know if an object is alive or not
@@ -202,7 +201,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
           reject(error ? error : new Ember.Error('Sails socket service destroyed'));
         }
       });
-    }, fmt('getting the connected Sails socket for `%@` request on %@', method, args[0]));
+    }, `getting the connected Sails socket for ${method} request on ${args[0]}`);
   },
 
   /**
@@ -211,7 +210,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @inheritDoc
    */
   trigger: function (event/*, arg*/) {
-    this.debug(fmt('triggering event `%@`', event));
+    this.debug(`triggering event ${event}`);
     return this._super.apply(this, arguments);
   },
 
@@ -284,7 +283,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
       if (!(meta = this._listeners[event]).isListening) {
         this._sailsSocket._raw.addEventListener(event, meta.method);
         meta.isListening = true;
-        this.info(fmt('attached event `%@` on socket', event));
+        this.info(`attached event ${event} on socket`);
       }
     }
     return this;
@@ -304,7 +303,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
       if ((meta = this._listeners[event]).isListening) {
         this._sailsSocket._raw.removeEventListener(event, meta.method);
         meta.isListening = false;
-        this.info(fmt('detached event `%@` from socket', event));
+        this.info(`detached event ${event} from socket`);
       }
     }
     return this;
