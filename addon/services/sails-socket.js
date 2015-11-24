@@ -7,7 +7,6 @@ var run = Ember.run;
 var bind = run.bind;
 var next = run.next;
 var later = run.later;
-var EmberString = Ember.String;
 
 /**
  * Shortcut to know if an object is alive or not

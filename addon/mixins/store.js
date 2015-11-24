@@ -29,6 +29,7 @@ var StoreMixin = Ember.Mixin.create({
    * @inheritDoc
    */
   push: function (results/*, data, _partial*/) {
+	/* jshint unused:false */
     var res = this._super.apply(this, arguments), id, type, adapter,
       resArray = Array.isArray(res) ? res : [res],
       self = this;
