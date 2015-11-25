@@ -190,7 +190,7 @@ export default SailsBaseAdapter.extend({
   _scheduleSubscribe: function (type, id) {
     var opt, key;
     opt = this.getProperties('subscribeMethod', 'subscribeEndpoint');
-    if (opt.subscribeMethod && opt.subscribeEndpoint && id && this.shouldSubscribe(type, id)) {
+    if (id && this.shouldSubscribe(type, id)) {
       if (!this._scheduledSubscriptions) {
         this._scheduledSubscriptions = {};
       }
@@ -227,18 +227,21 @@ export default SailsBaseAdapter.extend({
         payload[k] = Object.keys(data[k]);
         this._listenToSocket(k);
       }
-      self.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
-      // ask the API to subscribe to those records
-      this.fetchCSRFToken().then(function () {
-        self.checkCSRF(payload);
-        self.get('sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
-          .then(function (result) {
-            self.debug('subscription successful, result:', result);
-          })
-          .catch(function (/* jwr */) {
-            self.warn('error when trying to subscribe to some model(s)');
-          });
-      });
+	  
+	  if(opt.subscribeEndpoint && opt.subscribeMethod) {
+		  self.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
+		  // ask the API to subscribe to those records
+		  this.fetchCSRFToken().then(function () {
+			  self.checkCSRF(payload);
+			  self.get('sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
+			  .then(function (result) {
+				  self.debug('subscription successful, result:', result);
+			  })
+			  .catch(function (/* jwr */) {
+				  self.warn('error when trying to subscribe to some model(s)');
+			  });
+		  });
+	  }
     }
   }
 });
