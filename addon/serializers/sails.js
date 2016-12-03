@@ -23,6 +23,9 @@ function blueprintsWrapMethod(method) {
  * @extends DS.RESTSerializer
  */
 var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
+
+  isNewSerializerAPI: true,
+
   /**
    * The config of the addon will be set here by the initializer
    * @since 0.0.17
@@ -44,7 +47,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extractArray
    * @inheritDoc
    */
-  extractArray: blueprintsWrapMethod(function (store, primaryType, payload) {
+  normalizeArrayResponse: blueprintsWrapMethod(function (store, primaryType, payload) {
     var newPayload = {};
     newPayload[pluralize(primaryType.modelName)] = payload;
     return this._super(store, primaryType, newPayload);
@@ -55,7 +58,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extractSingle
    * @inheritDoc
    */
-  extractSingle: blueprintsWrapMethod(function (store, primaryType, payload, recordId) {
+  normalizeSingleResponse: blueprintsWrapMethod(function (store, primaryType, payload, recordId) {
     var newPayload;
     if (payload === null) {
       return this._super.apply(this, arguments);
@@ -70,7 +73,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extractDeleteRecord
    * @inheritDoc
    */
-  extractDeleteRecord: blueprintsWrapMethod(function (store, type, payload, id, requestType) {
+  normalizeDeleteRecordResponse: blueprintsWrapMethod(function (store, type, payload, id, requestType) {
     return this._super(store, type, null, id, requestType);
   }),
 
@@ -81,7 +84,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    */
   serializeIntoHash: blueprintsWrapMethod(function (data, type, record, options) {
     var json;
-    if (Ember.keys(data).length > 0) {
+    if (Object.keys(data).length > 0) {
       this.error(
         fmt('trying to serialize multiple records in one hash for type %@', type.modelName),
         data
@@ -108,7 +111,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @method extract
    * @inheritDoc
    */
-  extract: function (store, type/*, payload, id, requestType*/) {
+  normalizeResponse: function (store, type/*, payload, id, requestType*/) {
     var adapter, modelName, isUsingSocketAdapter;
     // this is the only place we have access to the store, so that we can get the adapter and check
     // if it is an instance of sails socket adapter, and so register for events if necessary on that
@@ -118,7 +121,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     }
     modelName = type.modelName;
     if (this._modelsUsingSailsSocketAdapter[modelName] === undefined) {
-      adapter = store.adapterFor(type);
+      adapter = store.adapterFor(modelName);
       this._modelsUsingSailsSocketAdapter[modelName] = isUsingSocketAdapter = adapter instanceof SailsSocketAdapter;
       if (isUsingSocketAdapter) {
         adapter._listenToSocket(modelName);

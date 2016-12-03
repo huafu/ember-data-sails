@@ -227,7 +227,7 @@ export default SailsBaseAdapter.extend({
         payload[k] = Object.keys(data[k]);
         this._listenToSocket(k);
       }
-      self.debug(fmt('asking the API to subscribe to some records of type %@', Ember.keys(data).join(', ')));
+      self.debug(fmt('asking the API to subscribe to some records of type %@', Object.keys(data).join(', ')));
       // ask the API to subscribe to those records
       this.fetchCSRFToken().then(function () {
         self.checkCSRF(payload);

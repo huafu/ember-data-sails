@@ -20,26 +20,30 @@ export default SailsBaseAdapter.extend({
    * @property csrfTokenUrl
    * @type String
    */
-  csrfTokenUrl: computed('host', 'namespace', 'csrfTokenPath', function (key, value) {
-    var csrfTokenUrl, csrfTokenPath;
-    if (arguments.length > 1) {
-      this._csrfTokenUrl = csrfTokenUrl = value;
-    }
-    else if (this._csrfTokenUrl !== undefined) {
-      csrfTokenUrl = this._csrfTokenUrl;
-    }
-    else {
-      csrfTokenPath = this.get('csrfTokenPath');
-      csrfTokenUrl = Ember.A([
-        this.get('host'),
-        csrfTokenPath.charAt(0) === '/' ? null : this.get('namespace'),
-        csrfTokenPath.replace(/^\//, '')
-      ]).filter(Boolean).join('/');
-      if (!/^(https?:)?\/\//.test(csrfTokenUrl)) {
-        csrfTokenUrl = '/' + csrfTokenUrl;
+  csrfTokenUrl: computed('host', 'namespace', 'csrfTokenPath',{
+    get: function(key) {
+      var csrfTokenUrl, csrfTokenPath;
+      if (this._csrfTokenUrl !== undefined) {
+        csrfTokenUrl = this._csrfTokenUrl;
       }
+      else {
+        csrfTokenPath = this.get('csrfTokenPath');
+        csrfTokenUrl = Ember.A([
+          this.get('host'),
+          csrfTokenPath.charAt(0) === '/' ? null : this.get('namespace'),
+          csrfTokenPath.replace(/^\//, '')
+        ]).filter(Boolean).join('/');
+        if (!/^(https?:)?\/\//.test(csrfTokenUrl)) {
+          csrfTokenUrl = '/' + csrfTokenUrl;
+        }
+      }
+      return csrfTokenUrl;
+    },
+    set: function(key, value) {
+      this._csrfTokenUrl = value;
+      return this._csrfTokenUrl;
     }
-    return csrfTokenUrl;
+
   }),
 
 
