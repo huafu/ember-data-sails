@@ -4,7 +4,6 @@ import WithLoggerMixin from '../mixins/with-logger';
 
 
 var EmberString = Ember.String;
-var fmt = EmberString.fmt;
 var pluralize = EmberString.pluralize;
 var camelize = EmberString.camelize;
 var run = Ember.run;
@@ -103,7 +102,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
     processRequest = bind(this, function () {
       return this._request(out, url, method, options)
         .then(bind(this, function (response) {
-          this.info(fmt('%@ %@ request on %@: SUCCESS', out.protocol, method, url));
+          this.info(`${out.protocol} ${method} request on ${url}: SUCCESS`);
           this.debug('  → request:', options.data);
           this.debug('  ← response:', response);
           if (this.isErrorObject(response)) {
@@ -115,7 +114,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
           return response;
         }))
         .catch(bind(this, function (error) {
-          this.warn(fmt('%@ %@ request on %@: ERROR', out.protocol, method, url));
+          this.warn(`${out.protocol} ${method} request on ${url}: ERROR`);
           this.info('  → request:', options.data);
           this.info('  ← error:', error);
           return RSVP.reject(error);
