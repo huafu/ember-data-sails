@@ -18,6 +18,7 @@ var StoreMixin = Ember.Mixin.create({
       sub = args.pop();
     }
     this._pushSubscribes = sub;
+    args[0] = args[0].toString().slice(0, -1);
     this._super.apply(this, args);
     this._pushSubscribes = old;
   },
