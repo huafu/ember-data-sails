@@ -59,7 +59,11 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    */
   socketUrl: computed(function () {
     var script = document.getElementById('eds-sails-io-script');
-    return script.src.replace(/^([^:]+:\/\/[^\/]+).*$/g, '$1');
+    if(script) {
+      return script.src.replace(/^([^:]+:\/\/[^\/]+).*$/g, '$1');
+    } else {
+      return null;
+    }
   }),
 
   /**
@@ -333,7 +337,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
     this.info('socket core object ready');
     this.set('isInitialized', true);
     this.trigger('didInitialize');
-    this._sailsSocket = io.sails.connect(this.get('socketUrl'));
+    this._sailsSocket = this.get('socketUrl') ? io.sails.connect(this.get('socketUrl')) : io.sails.connect();
     waitObject = bind(this, function () {
       if (this._sailsSocket._raw) {
         this._sailsSocket._raw.addEventListener('connect', bind(this, '_handleSocketConnect'));

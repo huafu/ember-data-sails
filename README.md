@@ -13,37 +13,55 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
         // do something with the response
       });
     ```
-    
-    It'll use by default the `sails.io.js` located at `<hostname>:1337/js/dependencies/sails.io.js`, but you can change this using configuration in `config/environment.js` file:
-    
+
+    In order to use the `SailsSocketService`, you're application will need to load `sails.io.js`. If not otherwise specified, it will be loaded from `//localhost:1337/js/dependencies/sails.io.js`, which is served through Sails by default.
+
+    If you'd like to change the path of your script file *AND* it's still served from your Sails server, you can simply change the `scriptPath` property to a path of your choosing in your `config/environment.js` file:
+
     ```js
     ENV.APP = {
       // if you want some useful debug information related to sails
       SAILS_LOG_LEVEL: 'debug',
       emberDataSails:  {
-        // default is to use same host and port as the ember app:
-        host: '//localhost:1337',
-        // this is the default and is the path to the sails io script:
-        //scriptPath: '/js/dependencies/sails.io.js'
+        // Sails serves up sails.io.js by default at the following path
+        scriptPath: '//localhost:1337/js/dependencies/sails.io.js'
       }
     }
     ```
-    
-    Also don't forget to add the rules for CSP:
-    
+
+    Alternatively, if you'd like to load the script from an external location that is *_NOT_* your Sails server, you may do so using the following properties:
+
+    ```js
+    // environment.js
+    ENV.APP {
+      emberDataSails: {
+        // tells ember-data-sails to load an external script
+        loadExternalScript: true,
+        // the url of the script
+        scriptPath: 'https://as889324.maxcdn.com/sails.io.js',
+        // the url to your Sails instance
+        sailsHost: "https://localhost:1337"
+      }
+    }
+    ```
+
+    The reason that you must  specify that the script is to be loaded from an external location is because `sails.io.js` will automatically attempt to connect to whatever server the file is loaded by. Therefore, if you're Sails server lives on a different host, other options need to be set to enable cross-domain communication. You can read more [here](https://github.com/balderdashy/sails.io.js#cross-domain).
+
+    Also don't forget to add the rules for CSP for wherever you script is hosted:
+
     ```js
     // allow to fetch the script
     ENV.contentSecurityPolicy['script-src'] += ' http://localhost:1337';
     // allow the websocket to connect
     ENV.contentSecurityPolicy['connect-src'] += ' http://localhost:1337 ws://localhost:1337';
     ```
-    
-    
+
+
 * `DS.SailsSocketAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsRESTAdapter`: use this adapter when you want to use sockets for your model(s)
 * `DS.SailsSerializer`: used by default when you use a Sails adapter, you shouldn't need to access it but it's there in case
 * `DS.Store.pushPayload([type], payload, [subscribe=false])`: as the original one from Ember Data, except it accepts an additional parameter which, when set to `true`, will tell the socket adapter to subscribe to the pushed records (see below)
-* `DS.Store.subscribe(type, ids)`: tells the sails socket adapter to subscribe to those models (see below) 
+* `DS.Store.subscribe(type, ids)`: tells the sails socket adapter to subscribe to those models (see below)
 
 
 ## Installation
@@ -76,7 +94,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     ```js
     // file: app/adapters/application.js
     import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
-    
+
     export default SailsSocketAdapter.extend({
       /**
        * Whether to use CSRF tokens or not
@@ -101,7 +119,7 @@ Adapters and tools for Ember to work well with Sails. Provides `SailsSocketServi
     ```js
     // file: app/adapters/application.js
     import SailsRESTAdapter from 'ember-data-sails/adapters/sails-rest';
-    
+
     export default SailsRESTAdapter.extend({
       /**
        * The host of your API
@@ -133,7 +151,7 @@ properties of the adapter to do a request on the API.
     * `subscribeMethod`: `get`, `post`, ... defaults to `post`
     * `subscribeEndpoint`: the endpoint to do the request on, defaults to `/socket/subscribe`
     * Of course you'll need to create a basic controller in your Sails API. Here is an example:
-    
+
         ```js
         // api/controllers/SocketController.js
         module.exports = {
