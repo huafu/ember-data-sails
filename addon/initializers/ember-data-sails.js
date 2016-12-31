@@ -19,7 +19,7 @@ export function initialize(container, application) {
       shouldLog = true;
     }
     if (!shouldLog) {
-      methods[level] = Ember.K;
+      methods[level] = function() {};
     }
   });
   WithLoggerMixin.reopen(methods);
