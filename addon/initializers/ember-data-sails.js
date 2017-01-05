@@ -36,7 +36,7 @@ export function initialize(container, application) {
 
 var EmberDataSailsInitializer = {
   name:   'ember-data-sails',
-  before: 'store',
+  before: 'ember-data',
 
   initialize: initialize
 };
