@@ -28,16 +28,22 @@ var StoreMixin = Ember.Mixin.create({
    * @method push
    * @inheritDoc
    */
-  push: function (typeName/*, data, _partial*/) {
-    var res = this._super.apply(this, arguments), id, type, adapter;
-    if (this._pushSubscribes && res && (id = res.get('id'))) {
-      type = this.modelFor(typeName);
-      adapter = this.adapterFor(type);
-      if(adapter instanceof SailsSocketAdapter)
-      {
-        adapter._scheduleSubscribe(type, id);
+  push: function (results/*, data, _partial*/) {
+	/* jshint unused:false */
+    var res = this._super.apply(this, arguments), id, type, adapter,
+      resArray = Array.isArray(res) ? res : [res],
+      self = this;
+    
+    resArray.forEach(function (res) {
+      if (res && (id = res.get('id'))) {
+        type = self.modelFor(res.constructor.modelName);
+        adapter = self.adapterFor(res.constructor.modelName);
+        if (adapter instanceof SailsSocketAdapter) {
+          adapter._scheduleSubscribe(type, id);
+        }
       }
-    }
+    });
+    
     return res;
   },
 

@@ -2,7 +2,6 @@ import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
 
 var EmberString = Ember.String;
-var fmt = EmberString.fmt;
 var camelize = EmberString.camelize;
 var pluralize = EmberString.pluralize;
 var run = Ember.run;
@@ -18,6 +17,7 @@ var debounce = run.debounce;
  * @constructor
  */
 export default SailsBaseAdapter.extend({
+  store: Ember.inject.service(),
   /**
    * Holds the scheduled subscriptions
    * @since 0.0.11
@@ -124,7 +124,7 @@ export default SailsBaseAdapter.extend({
       record.id = message.id;
     }
     payload[pluralize(camelize(type.modelName))] = [record];
-    store.pushPayload(type, payload);
+    store.pushPayload(type.modelName, payload);
   },
 
   /**
@@ -169,8 +169,8 @@ export default SailsBaseAdapter.extend({
     var eventName = camelize(model).toLowerCase();
     var socket = this.sailsSocket;
     if (socket.listenFor(eventName, true)) {
-      this.notice(fmt('setting up adapter to listen for `%@` messages', model));
-      store = this.container.lookup('store:main');
+      this.notice(`setting up adapter to listen for ${model} messages`);
+      store = this.get('store');
       type = store.modelFor(model);
       socket.on(eventName + '.created', bind(this, '_handleSocketRecordCreated', store, type));
       socket.on(eventName + '.updated', bind(this, '_handleSocketRecordUpdated', store, type));
@@ -190,7 +190,7 @@ export default SailsBaseAdapter.extend({
   _scheduleSubscribe: function (type, id) {
     var opt, key;
     opt = this.getProperties('subscribeMethod', 'subscribeEndpoint');
-    if (opt.subscribeMethod && opt.subscribeEndpoint && id && this.shouldSubscribe(type, id)) {
+    if (id && this.shouldSubscribe(type, id)) {
       if (!this._scheduledSubscriptions) {
         this._scheduledSubscriptions = {};
       }
@@ -227,18 +227,21 @@ export default SailsBaseAdapter.extend({
         payload[k] = Object.keys(data[k]);
         this._listenToSocket(k);
       }
-      self.debug(fmt('asking the API to subscribe to some records of type %@', Ember.keys(data).join(', ')));
-      // ask the API to subscribe to those records
-      this.fetchCSRFToken().then(function () {
-        self.checkCSRF(payload);
-        self.get('sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
-          .then(function (result) {
-            self.debug('subscription successful, result:', result);
-          })
-          .catch(function (/* jwr */) {
-            self.warn('error when trying to subscribe to some model(s)');
-          });
-      });
+	  
+	  if(opt.subscribeEndpoint && opt.subscribeMethod) {
+		  self.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
+		  // ask the API to subscribe to those records
+		  this.fetchCSRFToken().then(function () {
+			  self.checkCSRF(payload);
+			  self.get('sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
+			  .then(function (result) {
+				  self.debug('subscription successful, result:', result);
+			  })
+			  .catch(function (/* jwr */) {
+				  self.warn('error when trying to subscribe to some model(s)');
+			  });
+		  });
+	  }
     }
   }
 });
