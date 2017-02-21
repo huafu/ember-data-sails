@@ -2,7 +2,7 @@ import Ember from 'ember';
 import SailsSocketAdapter from '../adapters/sails-socket';
 
 
-var StoreMixin = Ember.Mixin.create({
+const StoreMixin = Ember.Mixin.create({
   /**
    * @since 0.0.11
    * @inheritDoc
@@ -12,8 +12,9 @@ var StoreMixin = Ember.Mixin.create({
    * @param {Boolean} [subscribe] Whether to subscribe to pushed models or not (Sails socket)
    */
   pushPayload: function (/*type, payload, subscribe*/) {
-    var args = [].slice.call(arguments), sub = false,
-      old = this._pushSubscribes;
+    let sub = false;
+    const args = [].slice.call(arguments);
+	  const old = this._pushSubscribes;
     if (Ember.typeOf(args[args.length - 1]) === 'boolean') {
       sub = args.pop();
     }
@@ -30,14 +31,14 @@ var StoreMixin = Ember.Mixin.create({
    */
   push: function (results/*, data, _partial*/) {
 	/* jshint unused:false */
-    var res = this._super.apply(this, arguments), id, type, adapter,
-      resArray = Array.isArray(res) ? res : [res],
-      self = this;
+    const res = this._super.apply(this, arguments);
+	  const resArray = Array.isArray(res) ? res : [res];
+	  let id;
     
-    resArray.forEach(function (res) {
+    resArray.forEach(res => {
       if (res && (id = res.get('id'))) {
-        type = self.modelFor(res.constructor.modelName);
-        adapter = self.adapterFor(res.constructor.modelName);
+        const type = this.modelFor(res.constructor.modelName);
+        const adapter = this.adapterFor(res.constructor.modelName);
         if (adapter instanceof SailsSocketAdapter) {
           adapter._scheduleSubscribe(type, id);
         }
@@ -56,12 +57,11 @@ var StoreMixin = Ember.Mixin.create({
    * @param {Array<String|Number>|String|Number} ids
    */
   subscribe: function (type, ids) {
-    var adapter;
     if (Ember.typeOf(ids) !== 'array') {
       ids = [ids];
     }
     type = this.modelFor(type);
-    adapter = this.adapterFor(type);
+    const adapter = this.adapterFor(type);
     for (var i = 0; i < ids.length; i++) {
       adapter._scheduleSubscribe(type, ids[i]);
     }

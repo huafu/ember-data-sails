@@ -1,12 +1,10 @@
 import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
 
-var EmberString = Ember.String;
-var camelize = EmberString.camelize;
-var pluralize = EmberString.pluralize;
-var run = Ember.run;
-var bind = run.bind;
-var debounce = run.debounce;
+const { get, set } = Ember;
+const { service } = Ember.inject;
+const { camelize, pluralize } = Ember.String;
+const { bind, debounce } = Ember.run;
 
 /**
  * Adapter for SailsJS sockets
@@ -17,7 +15,8 @@ var debounce = run.debounce;
  * @constructor
  */
 export default SailsBaseAdapter.extend({
-  store: Ember.inject.service(),
+  store: service(),
+	sailsSocket: service(),
   /**
    * Holds the scheduled subscriptions
    * @since 0.0.11
@@ -49,7 +48,7 @@ export default SailsBaseAdapter.extend({
    */
   init: function () {
     this._super();
-    this.sailsSocket.on('didConnect', this, 'fetchCSRFToken', true);
+    get(this, 'sailsSocket').on('didConnect', this, 'fetchCSRFToken', true);
   },
 
   /**
@@ -66,7 +65,7 @@ export default SailsBaseAdapter.extend({
    */
   _request: function (out, url, method, options) {
     out.protocol = 'socket';
-    return this.sailsSocket.request(method, url, options.data);
+    return get(this, 'sailsSocket').request(method, url, options.data);
   },
 
   /**
@@ -102,7 +101,7 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _fetchCSRFToken: function () {
-    return this.sailsSocket.request('get', this.get('csrfTokenPath').replace(/^\/?/, '/'))
+    return get(this, 'sailsSocket').request('get', this.get('csrfTokenPath').replace(/^\/?/, '/'))
       .then(function (tokenObject) {
         return tokenObject._csrf;
       });
@@ -119,7 +118,8 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _handleSocketRecordCreated: function (store, type, message) {
-    var record = message.data, payload = {};
+    const record = message.data;
+    const payload = {};
     if (!record.id && message.id) {
       record.id = message.id;
     }
@@ -150,7 +150,7 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _handleSocketRecordDeleted: function (store, type, message) {
-    var record = store.getById(type.modelName, message.id);
+    const record = store.getById(type.modelName, message.id);
     if (record && typeof record.get('dirtyType') === 'undefined') {
       record.unloadRecord();
     }
@@ -165,13 +165,12 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _listenToSocket: function (model) {
-    var store, type;
-    var eventName = camelize(model).toLowerCase();
-    var socket = this.sailsSocket;
+    const eventName = camelize(model).toLowerCase();
+    const socket = get(this, 'sailsSocket');
     if (socket.listenFor(eventName, true)) {
       this.notice(`setting up adapter to listen for ${model} messages`);
-      store = this.get('store');
-      type = store.modelFor(model);
+      const store = get(this, 'store');
+      const type = store.modelFor(model);
       socket.on(eventName + '.created', bind(this, '_handleSocketRecordCreated', store, type));
       socket.on(eventName + '.updated', bind(this, '_handleSocketRecordUpdated', store, type));
       socket.on(eventName + '.destroyed', bind(this, '_handleSocketRecordDeleted', store, type));
@@ -188,14 +187,12 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _scheduleSubscribe: function (type, id) {
-    var opt, key;
-    opt = this.getProperties('subscribeMethod', 'subscribeEndpoint');
     if (id && this.shouldSubscribe(type, id)) {
       if (!this._scheduledSubscriptions) {
         this._scheduledSubscriptions = {};
       }
       // use an object and keys so that we don't have duplicate IDs
-      key = camelize(type.modelName);
+      let key = camelize(type.modelName);
       if (!this._scheduledSubscriptions[key]) {
         this._scheduledSubscriptions[key] = {};
       }
@@ -215,33 +212,32 @@ export default SailsBaseAdapter.extend({
    * @private
    */
   _subscribeScheduled: function () {
-    var data, payload, k, self = this,
-      opt = this.getProperties('subscribeMethod', 'subscribeEndpoint');
     if (this._scheduledSubscriptions) {
       // grab and delete our scheduled subscriptions
-      data = this._scheduledSubscriptions;
+	    let opt = this.getProperties('subscribeMethod', 'subscribeEndpoint');
+      let data = this._scheduledSubscriptions;
       this._scheduledSubscriptions = null;
-      payload = {};
+      const payload = {};
       // the IDs are the keys so that set both the same will not duplicate them, we need to reduce them
-      for (k in data) {
+      for (let k in data) {
         payload[k] = Object.keys(data[k]);
         this._listenToSocket(k);
       }
-	  
-	  if(opt.subscribeEndpoint && opt.subscribeMethod) {
-		  self.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
-		  // ask the API to subscribe to those records
-		  this.fetchCSRFToken().then(function () {
-			  self.checkCSRF(payload);
-			  self.get('sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
-			  .then(function (result) {
-				  self.debug('subscription successful, result:', result);
-			  })
-			  .catch(function (/* jwr */) {
-				  self.warn('error when trying to subscribe to some model(s)');
+
+		  if(opt.subscribeEndpoint && opt.subscribeMethod) {
+			  this.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
+			  // ask the API to subscribe to those records
+			  this.fetchCSRFToken().then(() => {
+				  this.checkCSRF(payload);
+				  get(this, 'sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
+				  .then(function (result) {
+					  this.debug('subscription successful, result:', result);
+				  })
+				  .catch(function (/* jwr */) {
+					  this.warn('error when trying to subscribe to some model(s)');
+				  });
 			  });
-		  });
-	  }
+		  }
     }
   }
 });

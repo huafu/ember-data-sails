@@ -2,17 +2,11 @@ import DS from 'ember-data';
 import Ember from 'ember';
 import WithLoggerMixin from '../mixins/with-logger';
 
-
-var EmberString = Ember.String;
-var pluralize = EmberString.pluralize;
-var camelize = EmberString.camelize;
-var run = Ember.run;
-var schedule = run.schedule;
-var bind = run.bind;
-var $ = Ember.$;
-var RSVP = Ember.RSVP;
-var computed = Ember.computed;
-var bool = computed.bool;
+const { get, set } = Ember;
+const { pluralize, camelize } = Ember.String;
+const { schedule, bind } = Ember.run;
+const { $, RSVP, computed } = Ember;
+const { bool } = computed;
 
 /**
  * Base adapter for SailsJS adapters
@@ -79,7 +73,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    */
   init: function () {
     this._super();
-    this.set('csrfToken', null);
+    set(this, 'csrfToken', null);
   },
 
   /**
@@ -90,7 +84,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @inheritDoc
    */
   ajax: function (url, method, options) {
-    var processRequest, out = {};
+    const out = {};
     method = method.toUpperCase();
     if (!options) {
       options = {};
@@ -99,7 +93,7 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
       // so that we can add our CSRF token
       options.data = {};
     }
-    processRequest = bind(this, function () {
+    const processRequest = bind(this, function () {
       return this._request(out, url, method, options)
         .then(bind(this, function (response) {
           this.info(`${out.protocol} ${method} request on ${url}: SUCCESS`);
@@ -138,8 +132,8 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @inheritDoc
    */
   ajaxError: function (jqXHR) {
-    var error = this._super(jqXHR);
-    var data;
+    const error = this._super(jqXHR);
+    let data;
 
     try {
       data = $.parseJSON(jqXHR.responseText);
@@ -169,27 +163,27 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    * @return {RSVP.Promise}
    */
   fetchCSRFToken: function (force) {
-    var self = this, promise;
+    let promise;
     if (this.get('useCSRF') && (force || !this.get('csrfToken'))) {
       if (!(promise = this.get('_csrfTokenLoadingPromise'))) {
         this.set('csrfToken', null);
         this.debug('fetching CSRF token...');
         promise = this._fetchCSRFToken()
           // handle success response
-          .then(function (token) {
+          .then(token => {
             if (!token) {
-              self.error('Got an empty CSRF token from the server.');
+              this.error('Got an empty CSRF token from the server.');
               return RSVP.reject('Got an empty CSRF token from the server!');
             }
-            self.info('got a new CSRF token:', token);
-            self.set('csrfToken', token);
-            schedule('actions', self, 'trigger', 'didLoadCSRF', token);
+	          this.info('got a new CSRF token:', token);
+	          this.set('csrfToken', token);
+            schedule('actions', this, 'trigger', 'didLoadCSRF', token);
             return token;
           })
           // handle errors
-          .catch(function (error) {
-            self.error('error trying to get new CSRF token:', error);
-            schedule('actions', self, 'trigger', 'didLoadCSRF', null, error);
+          .catch(error => {
+	          this.error('error trying to get new CSRF token:', error);
+            schedule('actions', this, 'trigger', 'didLoadCSRF', null, error);
             return error;
           })
           // reset the loading promise

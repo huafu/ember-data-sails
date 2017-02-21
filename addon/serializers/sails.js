@@ -102,29 +102,26 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     return this._extractEmbeddedRecords(type, normalized);
   }),
 
-  /**
-   * @since 0.0.15
-   * @method extract
-   * @inheritDoc
-   */
-  normalizeResponse: function (store, type/*, payload, id, requestType*/) {
-    var adapter, modelName, isUsingSocketAdapter;
-    // this is the only place we have access to the store, so that we can get the adapter and check
-    // if it is an instance of sails socket adapter, and so register for events if necessary on that
-    // model. We keep a cache here to avoid too many calls
-    if (!this._modelsUsingSailsSocketAdapter) {
-      this._modelsUsingSailsSocketAdapter = Object.create(null);
-    }
-    modelName = type.modelName;
-    if (this._modelsUsingSailsSocketAdapter[modelName] === undefined) {
-      adapter = store.adapterFor(type);
-      this._modelsUsingSailsSocketAdapter[modelName] = isUsingSocketAdapter = adapter instanceof SailsSocketAdapter;
-      if (isUsingSocketAdapter) {
-        adapter._listenToSocket(modelName);
-      }
-    }
-    return this._super.apply(this, arguments);
-  },
+	/**
+	 * @since 0.0.15
+	 * @method extract
+	 * @inheritDoc
+	 */
+	normalizeResponse: function (store, primaryModelClass/*, payload, id, requestType*/) {
+		// this is the only place we have access to the store, so that we can get the adapter and check
+		// if it is an instance of sails socket adapter, and so register for events if necessary on that
+		// model. We keep a cache here to avoid too many calls
+		if (!this._modelsUsingSailsSocketAdapter) {
+			this._modelsUsingSailsSocketAdapter = Object.create(null);
+		}
+		const modelName = primaryModelClass.modelName;
+		if (this._modelsUsingSailsSocketAdapter[modelName] === undefined) {
+			const adapter = store.adapterFor(modelName);
+			this._modelsUsingSailsSocketAdapter[modelName] = adapter instanceof SailsSocketAdapter;
+			adapter._listenToSocket(modelName);
+		}
+		return this._super.apply(this, arguments);
+	},
 
 
   /**

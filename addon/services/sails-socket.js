@@ -2,11 +2,8 @@
 import Ember from 'ember';
 import WithLoggerMixin from '../mixins/with-logger';
 
-var computed = Ember.computed;
-var run = Ember.run;
-var bind = run.bind;
-var next = run.next;
-var later = run.later;
+const { computed } = Ember;
+const { bind, next, later } = Ember.run;
 
 /**
  * Shortcut to know if an object is alive or not
@@ -30,7 +27,7 @@ function isAlive(obj) {
  * @uses WithLoggerMixin
  * @constructor
  */
-var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
+const SailsSocketService = Ember.Service.extend(Ember.Evented, WithLoggerMixin, {
   /**
    * Holds our sails socket
    * @since 0.0.4
@@ -56,7 +53,7 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @type String
    */
   socketUrl: computed(function () {
-    var script = document.getElementById('eds-sails-io-script');
+    const script = document.getElementById('eds-sails-io-script');
     return script.src.replace(/^([^:]+:\/\/[^\/]+).*$/g, '$1');
   }),
 
@@ -133,8 +130,9 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @return {Boolean} Returns `true` if the some change has been triggered or scheduled, else `false`
    */
   listenFor: function (event, listen) {
-    var meta, sockMethod;
     listen = listen == null ? true : !!listen;
+    let meta = {};
+    let sockMethod;
     if (listen && !this._listeners[event]) {
       meta = {
         method:      bind(this, '_handleSocketMessage', event),
@@ -176,15 +174,14 @@ var SailsSocketService = Ember.Object.extend(Ember.Evented, WithLoggerMixin, {
    * @returns {Ember.RSVP.Promise}
    */
   request: function (method/*, arg*/) {
-    var self = this,
-      args = [].slice.call(arguments, 1),
-      incPending = bind(this, 'incrementProperty', 'pendingOperationCount');
+	  const args = [].slice.call(arguments, 1);
+	  const incPending = bind(this, 'incrementProperty', 'pendingOperationCount');
     method = method.toLowerCase();
     incPending(1);
-    return new Ember.RSVP.Promise(function (resolve, reject) {
-      self._connectedSocket(function (error, socket) {
-        if (isAlive(self) && !error) {
-          args.push(function (data, jwr) {
+    return new Ember.RSVP.Promise((resolve, reject) => {
+      this._connectedSocket((error, socket) => {
+        if (isAlive(this) && !error) {
+          args.push((data, jwr) => {
             incPending(-1);
             if (!jwr || Math.round(jwr.statusCode / 100) !== 2) {
               reject(jwr || data);

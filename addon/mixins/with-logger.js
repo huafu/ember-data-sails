@@ -2,10 +2,10 @@ import Ember from 'ember';
 
 export var LEVELS = 'debug info notice warn error'.split(' ');
 
-var levelMap = {
+const levelMap = {
   notice: 'log'
 };
-var methods = {};
+let methods = {};
 
 LEVELS.forEach(function (level) {
   methods[level] = Ember.run.bind(Ember.Logger, levelMap[level] || level, '[ed-sails]');

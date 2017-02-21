@@ -3,7 +3,7 @@ import SailsBaseAdapter from './sails-base';
 import Ember from 'ember';
 
 
-var computed = Ember.computed;
+const computed = Ember.computed;
 
 /**
  * Adapter for SailsJS HTTP REST API
@@ -21,7 +21,7 @@ export default SailsBaseAdapter.extend({
    * @type String
    */
   csrfTokenUrl: computed('host', 'namespace', 'csrfTokenPath', function (key, value) {
-    var csrfTokenUrl, csrfTokenPath;
+    let csrfTokenUrl, csrfTokenPath;
     if (arguments.length > 1) {
       this._csrfTokenUrl = csrfTokenUrl = value;
     }
