@@ -1,8 +1,4 @@
-import {
-  moduleFor,
-  test
-  } from 'ember-qunit';
-import Ember from 'ember';
+import { moduleFor } from 'ember-qunit';
 import ioMock from '../../helpers/io-mock';
 
 

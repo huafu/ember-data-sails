@@ -5,14 +5,15 @@ import {LEVELS} from '../mixins/with-logger';
 import StoreMixin from '../mixins/store';
 import SailsSocketService from '../services/sails-socket';
 
-var get = Ember.get;
+const { get } = Ember;
 
 DS.Store.reopen(StoreMixin);
 
 export function initialize(application) {
   let methods = {};
-  let minLevel = get(application, 'SAILS_LOG_LEVEL');
-  let shouldLog = false;
+	let shouldLog = false;
+	console.log(...arguments);
+  const minLevel = get(application, 'SAILS_LOG_LEVEL');
   LEVELS.forEach(function (level) {
     if (level === minLevel) {
       shouldLog = true;
@@ -33,11 +34,9 @@ export function initialize(application) {
   application.inject('controller', 'sailsSocket', 'service:sails-socket');
 }
 
-var EmberDataSailsInitializer = {
+export default {
   name:   'ember-data-sails',
   before: 'ember-data',
 
   initialize: initialize
 };
-
-export default EmberDataSailsInitializer;

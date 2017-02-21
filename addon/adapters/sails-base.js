@@ -164,8 +164,8 @@ export default DS.RESTAdapter.extend(Ember.Evented, WithLoggerMixin, {
    */
   fetchCSRFToken: function (force) {
     let promise;
-    if (this.get('useCSRF') && (force || !this.get('csrfToken'))) {
-      if (!(promise = this.get('_csrfTokenLoadingPromise'))) {
+    if (get(this, 'useCSRF') && (force || !get(this, 'csrfToken'))) {
+      if (!(promise = get(this, '_csrfTokenLoadingPromise'))) {
         this.set('csrfToken', null);
         this.debug('fetching CSRF token...');
         promise = this._fetchCSRFToken()

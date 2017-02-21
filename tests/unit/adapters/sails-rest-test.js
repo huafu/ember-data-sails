@@ -1,15 +1,8 @@
 import SailsRestAdapter from 'ember-data-sails/adapters/sails-rest';
+import { module, test } from 'qunit';
 import Ember from 'ember';
-import {
-  module,
-  test
-  } from 'qunit';
-import QUnit from 'qunit';
 
-var RSVP = Ember.RSVP;
-var run = Ember.run;
-var bind = run.bind;
-
+const { run } = Ember;
 
 module('SailsRestAdapter', {
   subject: function (obj) {
@@ -17,22 +10,11 @@ module('SailsRestAdapter', {
   }
 });
 
-var CSRF_PROPERTY = '_csrf';
-var CSRF_VALUE = 'abcdefgh012345';
-var URL = '/some/dummy/url';
-function addCsrf(obj) {
-  if (!obj) {
-    obj = {};
-  }
-  obj[CSRF_PROPERTY] = CSRF_VALUE;
-  return obj;
-}
-
 
 test('it has correct URL for the CSRF token', function (assert) {
   assert.expect(7);
 
-  var adapter = this.subject();
+  const adapter = this.subject();
 
   assert.equal(adapter.get('csrfTokenUrl'), '/csrfToken', 'default URL should be correct');
 

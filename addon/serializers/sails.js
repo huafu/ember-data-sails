@@ -3,16 +3,13 @@ import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
 import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
 
-
-var $ = Ember.$;
-var EmberString = Ember.String;
-var pluralize = EmberString.pluralize;
-var computed = Ember.computed;
+const { $, computed, get } = Ember;
+const { pluralize } = Ember.String;
 
 
 function blueprintsWrapMethod(method) {
   return function () {
-    return (this.get('useSailsEmberBlueprints') ? this._super : method).apply(this, arguments);
+    return (get(this, 'useSailsEmberBlueprints') ? this._super : method).apply(this, arguments);
   };
 }
 
@@ -21,7 +18,7 @@ function blueprintsWrapMethod(method) {
  * @class SailsSerializer
  * @extends DS.RESTSerializer
  */
-var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
+const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
   /**
    * The config of the addon will be set here by the initializer
    * @since 0.0.17
@@ -44,7 +41,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @inheritDoc
    */
   normalizeArrayResponse: blueprintsWrapMethod(function (store, primaryType, payload) {
-    var newPayload = {};
+    let newPayload = {};
     newPayload[pluralize(primaryType.modelName)] = payload;
     return this._super(store, primaryType, newPayload);
   }),
@@ -55,11 +52,10 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @inheritDoc
    */
   normalizeSingleResponse: blueprintsWrapMethod(function (store, primaryType, payload, recordId) {
-    var newPayload;
     if (payload === null) {
       return this._super.apply(this, arguments);
     }
-    newPayload = {};
+    let newPayload = {};
     newPayload[pluralize(primaryType.modelName)] = [payload];
     return this._super(store, primaryType, newPayload, recordId);
   }),
@@ -79,7 +75,6 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @inheritDoc
    */
   serializeIntoHash: blueprintsWrapMethod(function (data, type, record, options) {
-    var json;
     if (Object.keys(data).length > 0) {
       this.error(
         `trying to serialize multiple records in one hash for type ${type.modelName}`,
@@ -87,7 +82,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
       );
       throw new Error('Sails does not accept putting multiple records in one hash');
     }
-    json = this.serialize(record, options);
+    const json = this.serialize(record, options);
     $.extend(data, json);
   }),
 
@@ -97,8 +92,7 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @inheritDoc
    */
   normalize: blueprintsWrapMethod(function (type, hash, prop) {
-    var normalized;
-    normalized = this._super(type, hash, prop);
+    const normalized = this._super(type, hash, prop);
     return this._extractEmbeddedRecords(type, normalized);
   }),
 
@@ -135,33 +129,32 @@ var SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @private
    */
   _extractEmbeddedRecords: function (type, hash) {
-    var self = this, serializer, store = this.store;
-    type.eachRelationship(function (key, rel) {
-      var data, modelName;
-      modelName = rel.type.modelName;
-      if ((data = hash[key])) {
+    const store = get(this, 'store');
+    type.eachRelationship((key, rel) => {
+      const modelName = rel.type.modelName;
+      const data = hash[key];
+	    const serializer = store.serializerFor(modelName);
+      if (data) {
         if (rel.kind === 'belongsTo') {
           if (Ember.typeOf(hash[key]) === 'object') {
-            self.debug(`found 1 embedded ${modelName} record:`, hash[key]);
+            this.debug(`found 1 embedded ${modelName} record:`, hash[key]);
             delete hash[key];
-            serializer = store.serializerFor(modelName);
-            self.store.push(rel.type, serializer.normalize(rel.type, data, null));
+	          store.push(rel.type, serializer.normalize(rel.type, data, null));
             hash[key] = data.id;
           }
         }
         else if (rel.kind === 'hasMany') {
-          serializer = store.serializerFor(modelName);
           hash[key] = data.map(function (item) {
             if (Ember.typeOf(item) === 'object') {
-              self.debug(`found 1 embedded ${modelName} record:`, item);
-              self.store.push(rel.type, serializer.normalize(rel.type, item, null));
+              this.debug(`found 1 embedded ${modelName} record:`, item);
+              store.push(rel.type, serializer.normalize(rel.type, item, null));
               return item.id;
             }
             return item;
           });
         }
         else {
-          self.warn(`unknown relationship kind ${rel.kind}:`, rel);
+          this.warn(`unknown relationship kind ${rel.kind}:`, rel);
           throw new Error('Unknown relationship kind ' + rel.kind);
         }
       }

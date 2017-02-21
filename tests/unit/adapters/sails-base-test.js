@@ -4,7 +4,6 @@ import {
   module,
   test
   } from 'qunit';
-import QUnit from 'qunit';
 
 var RSVP = Ember.RSVP;
 var run = Ember.run;
@@ -59,7 +58,6 @@ test('it checks the CSRF and inject it in given payload', function (assert) {
 
 test('it starts an ajax request with or without useCSRF enabled', function (assert) {
   assert.expect(21);
-  QUnit.stop();
 
   var res, calls, adapter, options;
   calls = {};
@@ -79,7 +77,7 @@ test('it starts an ajax request with or without useCSRF enabled', function (asse
   // GET with CSRF disabled
   res = {data: {}};
   calls = {};
-  run(adapter, 'ajax', URL, 'GET', $.extend(true, {}, options = {}))
+  return run(adapter, 'ajax', URL, 'GET', $.extend(true, {}, options = {}))
     .then(function (response) {
       assert.strictEqual(calls._fetchCSRFToken, undefined, '_fetchCSRFToken should not have been called when doing a GET with CSRF disabled');
       assert.strictEqual(response, res.data, 'the response should be correct when doing a GET with CSRF disabled');
@@ -130,9 +128,6 @@ test('it starts an ajax request with or without useCSRF enabled', function (asse
         options,
         'the options should be correct when doing a POST with CSRF enabled'
       );
-
-      // continue unit testing
-      QUnit.start();
     })
   ;
 });

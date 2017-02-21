@@ -35,7 +35,7 @@ socket = {
     reconnecting:          false,
     disconnecting:         false,
 
-    connect: function (url) {
+    connect: function () {
       this._connect();
     },
 

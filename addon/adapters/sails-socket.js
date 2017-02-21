@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
 
-const { get, set } = Ember;
+const { get } = Ember;
 const { service } = Ember.inject;
 const { camelize, pluralize } = Ember.String;
 const { bind, debounce } = Ember.run;

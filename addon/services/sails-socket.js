@@ -237,9 +237,9 @@ const SailsSocketService = Ember.Service.extend(Ember.Evented, WithLoggerMixin, 
         return;
       }
       this.one('didConnect', bind(this, function () {
-        var callbacks = this._waitingForSockets;
+        const callbacks = this._waitingForSockets;
         delete this._waitingForSockets;
-        for(var i = 0; i < callbacks.length; i++) {
+        for(let i = 0; i < callbacks.length; i++) {
           callbacks[i].call(this, null, this._sailsSocket);
         }
       }));
@@ -274,9 +274,9 @@ const SailsSocketService = Ember.Service.extend(Ember.Evented, WithLoggerMixin, 
    * @private
    */
   _bindListeners: function () {
-    var meta;
-    for (var event in this._listeners) {
-      if (!(meta = this._listeners[event]).isListening) {
+    for (let event in this._listeners) {
+    	const meta = this._listeners[event];
+      if (!meta.isListening) {
         this._sailsSocket._raw.addEventListener(event, meta.method);
         meta.isListening = true;
         this.info(`attached event ${event} on socket`);
@@ -294,9 +294,9 @@ const SailsSocketService = Ember.Service.extend(Ember.Evented, WithLoggerMixin, 
    * @private
    */
   _unbindListeners: function () {
-    var meta;
-    for (var event in this._listeners) {
-      if ((meta = this._listeners[event]).isListening) {
+    for (let event in this._listeners) {
+    	const meta = this._listeners[event];
+      if (meta.isListening) {
         this._sailsSocket._raw.removeEventListener(event, meta.method);
         meta.isListening = false;
         this.info(`detached event ${event} from socket`);
@@ -332,7 +332,6 @@ const SailsSocketService = Ember.Service.extend(Ember.Evented, WithLoggerMixin, 
    * @private
    */
   _handleSocketReady: function () {
-    var waitObject;
     if (!isAlive(this)) {
       return;
     }
@@ -340,7 +339,7 @@ const SailsSocketService = Ember.Service.extend(Ember.Evented, WithLoggerMixin, 
     this.set('isInitialized', true);
     this.trigger('didInitialize');
     this._sailsSocket = io.sails.connect(this.get('socketUrl'));
-    waitObject = bind(this, function () {
+    const waitObject = bind(this, function () {
       if (this._sailsSocket._raw) {
         this._sailsSocket._raw.addEventListener('connect', bind(this, '_handleSocketConnect'));
         this._sailsSocket._raw.addEventListener('disconnect', bind(this, '_handleSocketDisconnect'));

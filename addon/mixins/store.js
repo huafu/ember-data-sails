@@ -62,7 +62,7 @@ const StoreMixin = Ember.Mixin.create({
     }
     type = this.modelFor(type);
     const adapter = this.adapterFor(type);
-    for (var i = 0; i < ids.length; i++) {
+    for (let i = 0; i < ids.length; i++) {
       adapter._scheduleSubscribe(type, ids[i]);
     }
   }
