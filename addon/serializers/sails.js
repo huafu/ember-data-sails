@@ -93,7 +93,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    */
   normalize: blueprintsWrapMethod(function (type, hash, prop) {
     const normalized = this._super(type, hash, prop);
-    return this._extractEmbeddedRecords(type, normalized);
+    return this._extractEmbeddedRecords(this, this.store, type, normalized);
   }),
 
 	/**
@@ -128,12 +128,10 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @returns {Object}
    * @private
    */
-  _extractEmbeddedRecords: function (type, hash) {
-    const store = get(this, 'store');
+  _extractEmbeddedRecords: function (serializer, store, type, hash) {
     type.eachRelationship((key, rel) => {
       const modelName = rel.type.modelName;
       const data = hash[key];
-	    const serializer = store.serializerFor(modelName);
       if (data) {
         if (rel.kind === 'belongsTo') {
           if (Ember.typeOf(hash[key]) === 'object') {

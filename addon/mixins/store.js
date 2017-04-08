@@ -30,11 +30,11 @@ const StoreMixin = Ember.Mixin.create({
    * @inheritDoc
    */
   push: function (results/*, data, _partial*/) {
-		/* jshint unused:false */
+	/* jshint unused:false */
     const res = this._super.apply(this, arguments);
 	  const resArray = Array.isArray(res) ? res : [res];
 	  let id;
-    
+
     resArray.forEach(res => {
       if (res && (id = res.get('id'))) {
         const type = this.modelFor(res.constructor.modelName);
