@@ -261,7 +261,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
    */
   _reconnect: function () {
     if (this._sailsSocket._raw && !this._sailsSocket._raw.connected && !this._sailsSocket._raw.connecting) {
-      this._sailsSocket._raw.reconnect();
+      this._sailsSocket.reconnect();
     }
   },
 

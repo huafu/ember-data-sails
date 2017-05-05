@@ -43,7 +43,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
   normalizeArrayResponse: blueprintsWrapMethod(function (store, primaryType, payload) {
     let newPayload = {};
     newPayload[pluralize(primaryType.modelName)] = payload;
-    return this._super(store, primaryType, newPayload);
+    return this._super(...arguments);
   }),
 
   /**
@@ -57,16 +57,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     }
     let newPayload = {};
     newPayload[pluralize(primaryType.modelName)] = [payload];
-    return this._super(store, primaryType, newPayload, recordId);
-  }),
-
-  /**
-   * @since 0.0.11
-   * @method extractDeleteRecord
-   * @inheritDoc
-   */
-  normalizeDeleteRecordResponse: blueprintsWrapMethod(function (store, type, payload, id, requestType) {
-    return this._super(store, type, null, id, requestType);
+    return this._super(...arguments);
   }),
 
   /**
@@ -92,7 +83,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
    * @inheritDoc
    */
   normalize: blueprintsWrapMethod(function (type, hash, prop) {
-    const normalized = this._super(type, hash, prop);
+    const normalized = this._super(...arguments);
     return this._extractEmbeddedRecords(this, this.store, type, normalized);
   }),
 
@@ -132,6 +123,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
     type.eachRelationship((key, rel) => {
       const modelName = rel.type.modelName;
       const data = hash[key];
+	    const serializer = store.serializerFor(modelName);
       if (data) {
         if (rel.kind === 'belongsTo') {
           if (Ember.typeOf(hash[key]) === 'object') {
