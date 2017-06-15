@@ -150,7 +150,7 @@ export default SailsBaseAdapter.extend({
 	 * @private
 	 */
 	_handleSocketRecordDeleted: function (store, type, message) {
-		const record = store.getById(type.modelName, message.id);
+		const record = store.peekRecord(type.modelName, message.id);
 		if (record && typeof record.get('dirtyType') === 'undefined') {
 			record.unloadRecord();
 		}
