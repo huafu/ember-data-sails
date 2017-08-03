@@ -255,13 +255,31 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 
   /**
    * Force the reconnection of the socket
-   *
+   * The way how the `io.socket` is checked for readiness is a hack, since listening to `connect`
+   * event was doing a lot of garbage listeners for each subsequent call to `on`. Maybe a bug in
+   * `sails` socket code...
    * @since 0.0.4
    * @method _reconnect
    */
   _reconnect: function () {
     if (this._sailsSocket._raw && !this._sailsSocket._raw.connected && !this._sailsSocket._raw.connecting) {
       this._sailsSocket.reconnect();
+	
+      // Need to re-do this since this._sailsSocket._raw is replaced during reconnect, 
+	  // and these events will never fire unless they are (hackishly) re-bound
+      const waitObject = bind(this, function () {
+        if (this._sailsSocket._raw) {
+            this._sailsSocket._raw.addEventListener('connect', bind(this, '_handleSocketConnect'));
+            this._sailsSocket._raw.addEventListener('disconnect', bind(this, '_handleSocketDisconnect'));
+            if (this._sailsSocket._raw.connected) {
+              next(this, '_handleSocketConnect');
+            }
+        }
+        else {
+          later(waitObject, 10);
+        }
+      });
+      waitObject();
     }
   },
 
