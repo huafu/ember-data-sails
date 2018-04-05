@@ -1,10 +1,10 @@
+import {debounce, bind} from '@ember/runloop';
+import {camelize} from '@ember/string';
+import {inject as service} from '@ember/service';
+import {get, aliasMethod} from '@ember/object';
 import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
-
-const { get } = Ember;
-const { service } = Ember.inject;
-const { camelize, pluralize } = Ember.String;
-const { bind, debounce } = Ember.run;
+import {pluralize} from 'ember-inflector';
 
 /**
  * Adapter for SailsJS sockets
@@ -31,7 +31,7 @@ export default SailsBaseAdapter.extend({
 	 * @property subscribeMethod
 	 * @type String
 	 */
-	subscribeMethod:         'POST',
+	subscribeMethod: 'POST',
 	/**
 	 * The path to send a request over the socket to update/setup subscriptions
 	 * Set this or subscribeMethod to `null` will disable this feature
@@ -39,7 +39,7 @@ export default SailsBaseAdapter.extend({
 	 * @property subscribeEndpoint
 	 * @type String
 	 */
-	subscribeEndpoint:       '/socket/subscribe',
+	subscribeEndpoint: '/socket/subscribe',
 
 	/**
 	 * @since 0.0.1
@@ -137,7 +137,7 @@ export default SailsBaseAdapter.extend({
 	 * @param {Object} message The message received
 	 * @private
 	 */
-	_handleSocketRecordUpdated: Ember.aliasMethod('_handleSocketRecordCreated'),
+	_handleSocketRecordUpdated: aliasMethod('_handleSocketRecordCreated'),
 
 	/**
 	 * Handle a destroyed record message
@@ -224,7 +224,7 @@ export default SailsBaseAdapter.extend({
 				this._listenToSocket(k);
 			}
 
-			if(opt.subscribeEndpoint && opt.subscribeMethod) {
+			if (opt.subscribeEndpoint && opt.subscribeMethod) {
 				this.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
 				// ask the API to subscribe to those records
 				this.fetchCSRFToken().then(() => {

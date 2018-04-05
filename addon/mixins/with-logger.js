@@ -1,14 +1,16 @@
+import Mixin from '@ember/object/mixin';
+import {bind} from '@ember/runloop';
 import Ember from 'ember';
 
 export var LEVELS = 'debug info notice warn error'.split(' ');
 
 const levelMap = {
-  notice: 'log'
+	notice: 'log'
 };
 let methods = {};
 
 LEVELS.forEach(function (level) {
-  methods[level] = Ember.run.bind(Ember.Logger, levelMap[level] || level, '[ed-sails]');
+	methods[level] = bind(Ember.Logger, levelMap[level] || level, '[ed-sails]');
 });
 
 /**
@@ -18,4 +20,4 @@ LEVELS.forEach(function (level) {
  * @extends Ember.Logger
  * @extensionFor Ember.Object
  */
-export default Ember.Mixin.create(methods);
+export default Mixin.create(methods);

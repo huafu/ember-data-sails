@@ -1,12 +1,13 @@
-import Ember from 'ember';
-import { module, test } from 'qunit';
-import { initialize } from 'ember-data-sails/initializers/ember-data-sails';
+import Application from '@ember/application';
+import {run} from '@ember/runloop';
+import {module, test} from 'qunit';
+import {initialize} from 'ember-data-sails/initializers/ember-data-sails';
 import destroyApp from '../../helpers/destroy-app';
 
 module('EmberDataSailsInitializer', {
 	beforeEach() {
-		Ember.run(() => {
-			this.application = Ember.Application.create();
+		run(() => {
+			this.application = Application.create();
 			this.application.deferReadiness();
 		});
 	},

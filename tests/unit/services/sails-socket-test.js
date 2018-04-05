@@ -1,16 +1,16 @@
-import { moduleFor } from 'ember-qunit';
+import {moduleFor} from 'ember-qunit';
 import ioMock from '../../helpers/io-mock';
 
 
 moduleFor('service:sails-socket', 'SailsSocketService', {
-  // Specify the other units that are required for this test.
-  //needs: ['initializer:ember-data-sails'],
-  setup:    function () {
-    ioMock.mockSetup();
-  },
-  teardown: function () {
-    ioMock.mockTeardown();
-  }
+	// Specify the other units that are required for this test.
+	//needs: ['initializer:ember-data-sails'],
+	setup: function () {
+		ioMock.mockSetup();
+	},
+	teardown: function () {
+		ioMock.mockTeardown();
+	}
 });
 
 /*
