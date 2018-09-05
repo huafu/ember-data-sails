@@ -1,5 +1,5 @@
 import Mixin from '@ember/object/mixin';
-import {bind} from '@ember/runloop';
+import { bind } from '@ember/runloop';
 import Ember from 'ember';
 
 export var LEVELS = 'debug info notice warn error'.split(' ');

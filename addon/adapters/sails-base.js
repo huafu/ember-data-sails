@@ -1,14 +1,13 @@
 import Evented from '@ember/object/evented';
 import $ from 'jquery';
 import RSVP from 'rsvp';
-import {bind, schedule} from '@ember/runloop';
-import {camelize} from '@ember/string';
-import {set, get} from '@ember/object';
+import { bind, schedule } from '@ember/runloop';
+import { camelize } from '@ember/string';
+import { set, get } from '@ember/object';
 import DS from 'ember-data';
-import Ember from 'ember';
 import WithLoggerMixin from '../mixins/with-logger';
-import {pluralize} from 'ember-inflector';
-import {bool} from '@ember/object/computed'
+import { pluralize } from 'ember-inflector';
+import { bool } from '@ember/object/computed'
 import { debug, warn } from '@ember/debug';
 
 /**

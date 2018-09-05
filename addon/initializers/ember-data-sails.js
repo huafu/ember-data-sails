@@ -1,7 +1,7 @@
-import {get} from '@ember/object';
+import { get } from '@ember/object';
 import DS from 'ember-data';
 import WithLoggerMixin from '../mixins/with-logger';
-import {LEVELS} from '../mixins/with-logger';
+import { LEVELS } from '../mixins/with-logger';
 import StoreMixin from '../mixins/store';
 import SailsSocketService from '../services/sails-socket';
 

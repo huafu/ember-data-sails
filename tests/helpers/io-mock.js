@@ -1,7 +1,7 @@
 /* global clearTimeout */
-import {fmt} from '@ember/string';
+import { fmt } from '@ember/string';
 
-import {bind} from '@ember/runloop';
+import { bind } from '@ember/runloop';
 
 var socket, io;
 

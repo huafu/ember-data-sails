@@ -1,4 +1,4 @@
-import {typeOf} from '@ember/utils';
+import { typeOf } from '@ember/utils';
 import Mixin from '@ember/object/mixin';
 import SailsSocketAdapter from '../adapters/sails-socket';
 

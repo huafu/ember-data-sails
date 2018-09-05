@@ -1,11 +1,11 @@
 /* global io */
-import {later, next, bind} from '@ember/runloop';
+import { later, next, bind } from '@ember/runloop';
 
 import RSVP from 'rsvp';
 import Service from '@ember/service';
 import Evented from '@ember/object/evented';
 import Error from '@ember/error';
-import {set, get, computed} from '@ember/object';
+import { set, get, computed } from '@ember/object';
 import WithLoggerMixin from '../mixins/with-logger';
 import { debug, warn } from '@ember/debug';
 

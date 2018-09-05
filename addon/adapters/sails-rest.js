@@ -1,5 +1,5 @@
-import {A} from '@ember/array';
-import {computed} from '@ember/object';
+import { A } from '@ember/array';
+import { computed } from '@ember/object';
 import DS from 'ember-data';
 import SailsBaseAdapter from './sails-base';
 

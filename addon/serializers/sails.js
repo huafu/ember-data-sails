@@ -1,12 +1,11 @@
-import {readOnly} from '@ember/object/computed';
-import {typeOf} from '@ember/utils';
+import { readOnly } from '@ember/object/computed';
+import { typeOf } from '@ember/utils';
 import $ from 'jquery';
-import {get} from '@ember/object';
-import Ember from 'ember';
+import { get } from '@ember/object';
 import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
 import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
-import {pluralize} from 'ember-inflector';
+import { pluralize } from 'ember-inflector';
 import { warn } from '@ember/debug';
 
 
