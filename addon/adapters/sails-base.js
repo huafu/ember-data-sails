@@ -9,6 +9,7 @@ import Ember from 'ember';
 import WithLoggerMixin from '../mixins/with-logger';
 import {pluralize} from 'ember-inflector';
 import {bool} from '@ember/object/computed'
+import { debug, warn } from '@ember/debug';
 
 /**
  * Base adapter for SailsJS adapters
@@ -98,9 +99,9 @@ export default DS.RESTAdapter.extend(Evented, WithLoggerMixin, {
 		const processRequest = bind(this, function () {
 			return this._request(out, url, method, options)
 				.then(bind(this, function (response) {
-					this.info(`${out.protocol} ${method} request on ${url}: SUCCESS`);
-					this.debug('  → request:', options.data);
-					this.debug('  ← response:', response);
+					debug(`${out.protocol} ${method} request on ${url}: SUCCESS`);
+					debug('  → request:', options.data);
+					debug('  ← response:', response);
 					if (this.isErrorObject(response)) {
 						if (response.errors) {
 							return RSVP.reject(new DS.InvalidError(this.formatError(response)));
@@ -110,9 +111,9 @@ export default DS.RESTAdapter.extend(Evented, WithLoggerMixin, {
 					return response;
 				}))
 				.catch(bind(this, function (error) {
-					this.warn(`${out.protocol} ${method} request on ${url}: ERROR`);
-					this.info('  → request:', options.data);
-					this.info('  ← error:', error);
+					warn(`${out.protocol} ${method} request on ${url}: ERROR`, false, { id: 'bc-ember-data-sails.failed-request' });
+					debug('  → request:', options.data);
+					debug('  ← error:', error);
 					return RSVP.reject(error);
 				}));
 		});
@@ -169,7 +170,7 @@ export default DS.RESTAdapter.extend(Evented, WithLoggerMixin, {
 		if (get(this, 'useCSRF') && (force || !get(this, 'csrfToken'))) {
 			if (!(promise = get(this, '_csrfTokenLoadingPromise'))) {
 				this.set('csrfToken', null);
-				this.debug('fetching CSRF token...');
+				debug('fetching CSRF token...');
 				promise = this._fetchCSRFToken()
 				// handle success response
 					.then(token => {
@@ -177,7 +178,7 @@ export default DS.RESTAdapter.extend(Evented, WithLoggerMixin, {
 							this.error('Got an empty CSRF token from the server.');
 							return RSVP.reject('Got an empty CSRF token from the server!');
 						}
-						this.info('got a new CSRF token:', token);
+						debug('got a new CSRF token:', token);
 						this.set('csrfToken', token);
 						schedule('actions', this, 'trigger', 'didLoadCSRF', token);
 						return token;
@@ -248,9 +249,8 @@ export default DS.RESTAdapter.extend(Evented, WithLoggerMixin, {
 		if (!this.useCSRF) {
 			return data;
 		}
-		this.info('adding CSRF token');
+		debug('adding CSRF token');
 		if (!this.csrfToken) {
-			this.error('CSRF not fetched yet');
 			throw new Error("CSRF Token not fetched yet.");
 		}
 		data._csrf = this.csrfToken;

@@ -7,6 +7,7 @@ import Evented from '@ember/object/evented';
 import Error from '@ember/error';
 import {set, get, computed} from '@ember/object';
 import WithLoggerMixin from '../mixins/with-logger';
+import { debug, warn } from '@ember/debug';
 
 /**
  * Shortcut to know if an object is alive or not
@@ -209,7 +210,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 	 * @inheritDoc
 	 */
 	trigger: function (event/*, arg*/) {
-		this.debug(`triggering event ${event}`);
+		debug(`triggering event ${event}`);
 		return this._super.apply(this, arguments);
 	},
 
@@ -223,15 +224,15 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 	 */
 	_connectedSocket: function (callback) {
 		if (!isAlive(this)) {
-			this.warn('cannot get socket, service destroyed');
+			warn('cannot get socket, service destroyed', false, { id: 'bc-ember-data-sails.socket'});
 			next(this, callback, new Error('Sails socket service destroyed'));
 		}
 		else if (get(this, 'isConnected')) {
-			this.debug('socket connected, giving it in next run loop');
+			debug('socket connected, giving it in next run loop');
 			next(this, callback, null, this._sailsSocket);
 		}
 		else {
-			this.info('socket not connected, listening for connect event before giving it');
+			debug('socket not connected, listening for connect event before giving it');
 			if (!this._waitingForSockets) {
 				this._waitingForSockets = [];
 			}
@@ -247,7 +248,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 				}
 			}));
 			if (get(this, 'isInitialized')) {
-				this.info('looks like we are initialized but not connected, reconnecting socket');
+				debug('looks like we are initialized but not connected, reconnecting socket');
 				this._reconnect();
 			}
 			else {
@@ -300,7 +301,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 			if (!meta.isListening) {
 				this._sailsSocket._raw.addEventListener(event, meta.method);
 				meta.isListening = true;
-				this.info(`attached event ${event} on socket`);
+				debug(`attached event ${event} on socket`);
 			}
 		}
 		return this;
@@ -320,7 +321,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 			if (meta.isListening) {
 				this._sailsSocket._raw.removeEventListener(event, meta.method);
 				meta.isListening = false;
-				this.info(`detached event ${event} from socket`);
+				debug(`detached event ${event} from socket`);
 			}
 		}
 		return this;
@@ -356,7 +357,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 		if (!isAlive(this)) {
 			return;
 		}
-		this.info('socket core object ready');
+		debug('socket core object ready');
 		set(this, 'isInitialized', true);
 		this.trigger('didInitialize');
 		this._sailsSocket = io.sails.connect(get(this, 'socketUrl'));

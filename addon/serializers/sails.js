@@ -7,6 +7,7 @@ import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
 import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
 import {pluralize} from 'ember-inflector';
+import { warn } from '@ember/debug';
 
 
 function blueprintsWrapMethod(method) {
@@ -146,7 +147,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
 					});
 				}
 				else {
-					this.warn(`unknown relationship kind ${rel.kind}:`, rel);
+					warn(`unknown relationship kind ${rel.kind}: ${rel}`, false, { id: 'bc-ember-data-sails.relationship' });
 					throw new Error('Unknown relationship kind ' + rel.kind);
 				}
 			}
