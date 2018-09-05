@@ -1,9 +1,11 @@
-import { debounce, bind } from '@ember/runloop';
-import { camelize } from '@ember/string';
-import { inject as service } from '@ember/service';
-import { get, aliasMethod } from '@ember/object';
+import {debounce, bind} from '@ember/runloop';
+import {camelize} from '@ember/string';
+import {inject as service} from '@ember/service';
+import {get, aliasMethod} from '@ember/object';
+import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
-import { pluralize } from 'ember-inflector';
+import {pluralize} from 'ember-inflector';
+import { warn, debug } from '@ember/debug';
 
 /**
  * Adapter for SailsJS sockets
@@ -224,16 +226,16 @@ export default SailsBaseAdapter.extend({
 			}
 
 			if (opt.subscribeEndpoint && opt.subscribeMethod) {
-				this.debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
+				debug(`asking the API to subscribe to some records of type ${Object.keys(data).join(', ')}`);
 				// ask the API to subscribe to those records
 				this.fetchCSRFToken().then(() => {
 					this.checkCSRF(payload);
 					get(this, 'sailsSocket').request(opt.subscribeMethod, opt.subscribeEndpoint, payload)
 						.then((result) => {
-							this.debug('subscription successful, result:', result);
+							debug('subscription successful, result:', result);
 						})
 						.catch((/* jwr */) => {
-							this.warn('error when trying to subscribe to some model(s)');
+							warn('error when trying to subscribe to some model(s)', false, { id: 'bc-ember-data-sails.subscribe' });
 						});
 				});
 			}

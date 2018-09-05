@@ -1,12 +1,12 @@
-import { readOnly } from '@ember/object/computed';
-import { typeOf } from '@ember/utils';
+import {readOnly} from '@ember/object/computed';
+import {typeOf} from '@ember/utils';
 import $ from 'jquery';
-import { get } from '@ember/object';
+import {get} from '@ember/object';
 import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
 import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
-import { pluralize } from 'ember-inflector';
-import { warn } from '@ember/debug';
+import {pluralize} from 'ember-inflector';
+import { warn, debug } from '@ember/debug';
 
 
 function blueprintsWrapMethod(method) {
@@ -129,7 +129,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
 			if (data) {
 				if (rel.kind === 'belongsTo') {
 					if (typeOf(hash[key]) === 'object') {
-						this.debug(`found 1 embedded ${modelName} record:`, hash[key]);
+						debug(`found 1 embedded ${modelName} record:`, hash[key]);
 						delete hash[key];
 						store.push(rel.type, serializer.normalize(rel.type, data, null));
 						hash[key] = data.id;
@@ -138,7 +138,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
 				else if (rel.kind === 'hasMany') {
 					hash[key] = data.map(function (item) {
 						if (typeOf(item) === 'object') {
-							this.debug(`found 1 embedded ${modelName} record:`, item);
+							debug(`found 1 embedded ${modelName} record:`, item);
 							store.push(rel.type, serializer.normalize(rel.type, item, null));
 							return item.id;
 						}
