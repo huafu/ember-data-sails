@@ -2,7 +2,6 @@ import {debounce, bind} from '@ember/runloop';
 import {camelize} from '@ember/string';
 import {inject as service} from '@ember/service';
 import {get, aliasMethod} from '@ember/object';
-import Ember from 'ember';
 import SailsBaseAdapter from './sails-base';
 import {pluralize} from 'ember-inflector';
 import { warn, debug } from '@ember/debug';
