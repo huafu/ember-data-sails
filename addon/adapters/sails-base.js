@@ -110,7 +110,7 @@ export default DS.RESTAdapter.extend(Evented, WithLoggerMixin, {
 					return response;
 				}))
 				.catch(bind(this, function (error) {
-					warn(`${out.protocol} ${method} request on ${url}: ERROR`, false, { id: 'bc-ember-data-sails.failed-request' });
+					warn(`${out.protocol} ${method} request on ${url}: ERROR`, false, { id: 'ember-data-sails.failed-request' });
 					debug('  → request:', options.data);
 					debug('  ← error:', error);
 					return RSVP.reject(error);

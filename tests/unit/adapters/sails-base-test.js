@@ -1,6 +1,6 @@
 import { run } from '@ember/runloop';
 import RSVP from 'rsvp';
-import SailsBaseAdapter from 'ember-data-sails/adapters/sails-base';
+import SailsBaseAdapter from '@brickclick/ember-data-sails/adapters/sails-base';
 import { module, test } from 'qunit';
 import extend from '../../helpers/extend';
 

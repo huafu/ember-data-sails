@@ -1,3 +1,3 @@
-import SailsSerializer from 'ember-data-sails/serializers/sails';
+import SailsSerializer from '@brickclick/ember-data-sails/serializers/sails';
 
 export default SailsSerializer;

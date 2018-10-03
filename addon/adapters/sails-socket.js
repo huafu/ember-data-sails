@@ -234,7 +234,7 @@ export default SailsBaseAdapter.extend({
 							debug('subscription successful, result:', result);
 						})
 						.catch((/* jwr */) => {
-							warn('error when trying to subscribe to some model(s)', false, { id: 'bc-ember-data-sails.subscribe' });
+							warn('error when trying to subscribe to some model(s)', false, { id: 'ember-data-sails.subscribe' });
 						});
 				});
 			}

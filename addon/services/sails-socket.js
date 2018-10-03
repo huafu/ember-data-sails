@@ -224,7 +224,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 	 */
 	_connectedSocket: function (callback) {
 		if (!isAlive(this)) {
-			warn('cannot get socket, service destroyed', false, { id: 'bc-ember-data-sails.socket'});
+			warn('cannot get socket, service destroyed', false, { id: 'ember-data-sails.socket'});
 			next(this, callback, new Error('Sails socket service destroyed'));
 		}
 		else if (get(this, 'isConnected')) {

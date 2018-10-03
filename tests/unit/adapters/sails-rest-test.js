@@ -1,5 +1,5 @@
 import { run } from '@ember/runloop';
-import SailsRestAdapter from 'ember-data-sails/adapters/sails-rest';
+import SailsRestAdapter from '@brickclick/ember-data-sails/adapters/sails-rest';
 import { module, test } from 'qunit';
 
 module('SailsRestAdapter', function(hooks) {

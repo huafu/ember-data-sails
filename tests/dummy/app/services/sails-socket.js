@@ -1,3 +1,3 @@
-import SailsSocketService from 'ember-data-sails/services/sails-socket';
+import SailsSocketService from '@brickclick/ember-data-sails/services/sails-socket';
 
 export default SailsSocketService.extend();

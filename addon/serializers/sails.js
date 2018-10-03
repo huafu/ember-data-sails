@@ -4,7 +4,7 @@ import $ from 'jquery';
 import { get } from '@ember/object';
 import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
-import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
+import SailsSocketAdapter from '@brickclick/ember-data-sails/adapters/sails-socket';
 import { pluralize } from 'ember-inflector';
 import { warn, debug } from '@ember/debug';
 import { computed } from '@ember/object';
@@ -147,7 +147,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
 					});
 				}
 				else {
-					warn(`unknown relationship kind ${rel.kind}: ${rel}`, false, { id: 'bc-ember-data-sails.relationship' });
+					warn(`unknown relationship kind ${rel.kind}: ${rel}`, false, { id: 'ember-data-sails.relationship' });
 					throw new Error('Unknown relationship kind ' + rel.kind);
 				}
 			}

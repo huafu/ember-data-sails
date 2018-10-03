@@ -1,6 +1,6 @@
 import { Promise as EmberPromise } from 'rsvp';
-import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
-import SailsRESTAdapter from 'ember-data-sails/adapters/sails-rest';
+import SailsSocketAdapter from '@brickclick/ember-data-sails/adapters/sails-socket';
+import SailsRESTAdapter from '@brickclick/ember-data-sails/adapters/sails-rest';
 
 export function adapterCall(adapter, returnPromise, method) {
 	const args = [].slice.call(arguments, 2);

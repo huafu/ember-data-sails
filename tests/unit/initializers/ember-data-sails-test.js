@@ -1,7 +1,7 @@
 import Application from '@ember/application';
 import { run } from '@ember/runloop';
 import { module, test } from 'qunit';
-import { initialize } from 'ember-data-sails/initializers/ember-data-sails';
+import { initialize } from '@brickclick/ember-data-sails/initializers/ember-data-sails';
 import destroyApp from '../../helpers/destroy-app';
 
 module('EmberDataSailsInitializer', function(hooks) {
