@@ -58,7 +58,7 @@ const SailsSocketService = Service.extend(Evented, WithLoggerMixin, {
 	 */
 	socketUrl: computed(function () {
 		const script = document.getElementById('eds-sails-io-script');
-		return script.src.replace(/^([^:]+:\/\/[^\/]+).*$/g, '$1');
+		return script.src.replace(/^([^:]+:\/\/[^/]+).*$/g, '$1');
 	}),
 
 	/**

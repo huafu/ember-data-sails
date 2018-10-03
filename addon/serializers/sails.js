@@ -1,12 +1,13 @@
-import {readOnly} from '@ember/object/computed';
-import {typeOf} from '@ember/utils';
+import { readOnly } from '@ember/object/computed';
+import { typeOf } from '@ember/utils';
 import $ from 'jquery';
-import {get} from '@ember/object';
+import { get } from '@ember/object';
 import DS from 'ember-data';
 import WithLogger from '../mixins/with-logger';
 import SailsSocketAdapter from 'ember-data-sails/adapters/sails-socket';
-import {pluralize} from 'ember-inflector';
+import { pluralize } from 'ember-inflector';
 import { warn, debug } from '@ember/debug';
+import { computed } from '@ember/object';
 
 
 function blueprintsWrapMethod(method) {
@@ -27,7 +28,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
 	 * @property config
 	 * @type Object
 	 */
-	config: {},
+	config: computed(function() { return {} }),
 
 	/**
 	 * Whether to use `sails-generate-ember-blueprints` or not
@@ -53,7 +54,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
 	 * @method extractSingle
 	 * @inheritDoc
 	 */
-	normalizeSingleResponse: blueprintsWrapMethod(function (store, primaryType, payload, recordId) {
+	normalizeSingleResponse: blueprintsWrapMethod(function (store, primaryType, payload) {
 		if (payload === null) {
 			return this._super.apply(this, arguments);
 		}
@@ -84,7 +85,7 @@ const SailsSerializer = DS.RESTSerializer.extend(WithLogger, {
 	 * @method normalize
 	 * @inheritDoc
 	 */
-	normalize: blueprintsWrapMethod(function (type, hash, prop) {
+	normalize: blueprintsWrapMethod(function (type) {
 		const normalized = this._super(...arguments);
 		return this._extractEmbeddedRecords(this, this.store, type, normalized);
 	}),

@@ -10,7 +10,6 @@ DS.Store.reopen(StoreMixin);
 export function initialize(application) {
 	let methods = {};
 	let shouldLog = false;
-	console.log(...arguments);
 	const minLevel = get(application, 'SAILS_LOG_LEVEL');
 	LEVELS.forEach(function (level) {
 		if (level === minLevel) {

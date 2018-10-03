@@ -30,8 +30,7 @@ const StoreMixin = Mixin.create({
 	 * @method push
 	 * @inheritDoc
 	 */
-	push: function (results/*, data, _partial*/) {
-		/* jshint unused:false */
+	push: function (/*results, data, _partial*/) {
 		const res = this._super.apply(this, arguments);
 		const resArray = Array.isArray(res) ? res : [res];
 		let id;

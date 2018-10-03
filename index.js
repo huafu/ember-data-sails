@@ -2,7 +2,7 @@
 'use strict';
 
 module.exports = {
-  name: 'ember-data-sails',
+  name: '@brickclick/ember-data-sails',
 
   contentFor: function (what, config) {
     var options;
